@@ -51,13 +51,6 @@ export default function Hero() {
             </div>
           </div>
         </div>
-        <ul className="mt-10 grid grid-cols-2 gap-x-5 gap-y-4 border-t border-border/70 pt-6 text-[0.68rem] font-semibold uppercase leading-relaxed tracking-[0.14em] text-muted-foreground sm:mt-14 sm:grid-cols-4 sm:gap-6 sm:text-xs">
-          {home.hero.credentials.map((credential) => (
-            <li key={credential} className="border-l border-accent/50 pl-3">
-              {credential}
-            </li>
-          ))}
-        </ul>
       </Container>
     </section>
   )

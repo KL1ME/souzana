@@ -141,12 +141,6 @@ export const home = {
     primaryCta: { label: "Κλείστε συνάντηση", href: "/contact" },
     secondaryCta: { label: "Οι τομείς μας", href: "/practice-areas" },
     trustLine: "Αρχική αξιολόγηση • Καθαρό πλαίσιο • Συνεχής ενημέρωση",
-    credentials: [
-      "Νομική σύμβουλος ΟΕΕ",
-      "INSEAD",
-      "University of Oxford",
-      "MSc in Shipping",
-    ],
     image: {
       src: assetPath("/images/hero.jpg"),
       alt: "Φωτεινός εσωτερικός χώρος γραφείου",
