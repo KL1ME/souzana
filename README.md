@@ -4,7 +4,7 @@ Professional website for Souzana Klimentidi, a law office based in Athens. The p
 
 ## Live site
 
-- [GitHub Pages](https://aandrew-kl.github.io/souzana/)
+- [GitHub Pages](https://kl1me.github.io/souzana/)
 
 ## Stack
 

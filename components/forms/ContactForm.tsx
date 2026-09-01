@@ -28,7 +28,23 @@ const initialState = {
 export default function ContactForm() {
   const [values, setValues] = useState(initialState)
   const [errors, setErrors] = useState<Record<string, string>>({})
-  const [status, setStatus] = useState<"idle" | "loading" | "success">("idle")
+  const [status, setStatus] = useState<"idle" | "opened">("idle")
+
+  const mailSubject = values.practiceArea
+    ? `Αίτημα επικοινωνίας — ${values.practiceArea}`
+    : "Αίτημα επικοινωνίας από την ιστοσελίδα"
+  const mailBody = [
+    `Ονοματεπώνυμο: ${values.fullName}`,
+    `Email: ${values.email}`,
+    values.phone ? `Τηλέφωνο: ${values.phone}` : null,
+    values.practiceArea ? `Τομέας ενδιαφέροντος: ${values.practiceArea}` : null,
+    "",
+    "Μήνυμα:",
+    values.message,
+  ]
+    .filter((line): line is string => line !== null)
+    .join("\n")
+  const mailtoHref = `mailto:${site.contact.email}?subject=${encodeURIComponent(mailSubject)}&body=${encodeURIComponent(mailBody)}`
 
   const validate = () => {
     const nextErrors: Record<string, string> = {}
@@ -53,14 +69,13 @@ export default function ContactForm() {
     setValues((prev) => ({ ...prev, [key]: value }))
   }
 
-  const handleSubmit = async (event: React.FormEvent) => {
+  const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault()
     const nextErrors = validate()
     setErrors(nextErrors)
     if (Object.keys(nextErrors).length > 0) return
-    setStatus("loading")
-    await new Promise((resolve) => setTimeout(resolve, 900))
-    setStatus("success")
+    window.location.href = mailtoHref
+    setStatus("opened")
   }
 
   return (
@@ -70,6 +85,8 @@ export default function ContactForm() {
           <Label htmlFor="fullName">Ονοματεπώνυμο *</Label>
           <Input
             id="fullName"
+            name="fullName"
+            autoComplete="name"
             value={values.fullName}
             onChange={(event) => handleChange("fullName", event.target.value)}
             placeholder="Ονοματεπώνυμο"
@@ -87,7 +104,9 @@ export default function ContactForm() {
           <Label htmlFor="email">Email *</Label>
           <Input
             id="email"
+            name="email"
             type="email"
+            autoComplete="email"
             value={values.email}
             onChange={(event) => handleChange("email", event.target.value)}
             placeholder="name@company.com"
@@ -105,14 +124,19 @@ export default function ContactForm() {
           <Label htmlFor="phone">Τηλέφωνο</Label>
           <Input
             id="phone"
+            name="phone"
+            type="tel"
+            inputMode="tel"
+            autoComplete="tel"
             value={values.phone}
             onChange={(event) => handleChange("phone", event.target.value)}
-            placeholder="+30 210 000 0000"
+            placeholder="Προαιρετικά"
           />
         </div>
         <div className="space-y-2">
           <Label htmlFor="practiceArea">Τομέας ενδιαφέροντος</Label>
           <Select
+            name="practiceArea"
             value={values.practiceArea}
             onValueChange={(value) => handleChange("practiceArea", value)}
           >
@@ -133,10 +157,12 @@ export default function ContactForm() {
         <Label htmlFor="message">Μήνυμα *</Label>
         <Textarea
           id="message"
+          name="message"
           value={values.message}
           onChange={(event) => handleChange("message", event.target.value)}
           placeholder="Περιγράψτε συνοπτικά την ανάγκη σας..."
           rows={6}
+          maxLength={3000}
           required
           aria-invalid={Boolean(errors.message)}
           aria-describedby={errors.message ? "message-error" : undefined}
@@ -151,6 +177,7 @@ export default function ContactForm() {
         <div className="flex items-start gap-3">
           <Checkbox
             id="consent"
+            name="consent"
             checked={values.consent}
             onCheckedChange={(checked) => handleChange("consent", Boolean(checked))}
             aria-invalid={Boolean(errors.consent)}
@@ -171,12 +198,16 @@ export default function ContactForm() {
         ) : null}
       </div>
       <div className="flex flex-wrap items-center gap-4">
-        <Button type="submit" size="lg" disabled={status === "loading"}>
-          {status === "loading" ? "Αποστολή..." : "Αποστολή μηνύματος"}
+        <Button type="submit" size="lg" className="w-full sm:w-auto">
+          Συνέχεια στο email
         </Button>
-        {status === "success" ? (
-          <p className="text-sm text-foreground">
-            {pages.contact.successMessage}
+        {status === "opened" ? (
+          <p className="text-sm leading-relaxed text-foreground" role="status" aria-live="polite">
+            {pages.contact.successMessage}{" "}
+            <a href={mailtoHref} className="underline decoration-accent underline-offset-4">
+              Ανοίξτε το ξανά
+            </a>
+            .
           </p>
         ) : (
           <p className="text-xs text-muted-foreground">

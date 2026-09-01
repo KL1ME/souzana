@@ -5,7 +5,7 @@ import { site } from "@/lib/content"
 export default function Footer() {
   return (
     <footer className="border-t border-accent/30 bg-background">
-      <Container className="grid gap-12 py-16 md:grid-cols-[1.1fr_1fr_1fr]">
+      <Container className="grid gap-10 py-12 sm:py-16 md:grid-cols-[1.1fr_1fr_1fr]">
         <div className="space-y-4">
           <div className="space-y-1">
             <p className="font-serif text-2xl tracking-[0.06em] sm:text-3xl">
@@ -17,19 +17,21 @@ export default function Footer() {
           </div>
           <p className="text-sm text-muted-foreground">{site.seo.description}</p>
         </div>
-        <div className="space-y-3 text-sm">
+        <div className="flex flex-col items-start gap-3 text-sm">
           <p className="font-semibold text-foreground">Επικοινωνία</p>
           <p className="text-muted-foreground">{site.contact.address}</p>
           <p className="text-muted-foreground">{site.contact.hours}</p>
-          <a
-            href={`tel:${site.contact.phone.replace(/\s/g, "")}`}
-            className="text-muted-foreground transition-colors hover:text-foreground"
-          >
-            {site.contact.phone}
-          </a>
+          {site.contact.phone ? (
+            <a
+              href={`tel:${site.contact.phone.replace(/\s/g, "")}`}
+              className="text-muted-foreground transition-colors hover:text-foreground"
+            >
+              {site.contact.phone}
+            </a>
+          ) : null}
           <a
             href={`mailto:${site.contact.email}`}
-            className="text-muted-foreground transition-colors hover:text-foreground"
+            className="break-all text-muted-foreground transition-colors hover:text-foreground sm:break-normal"
           >
             {site.contact.email}
           </a>

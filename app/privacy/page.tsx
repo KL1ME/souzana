@@ -1,17 +1,18 @@
-import type { Metadata } from "next"
 import Container from "@/components/layout/Container"
 import Prose from "@/components/typography/Prose"
 import { pages } from "@/lib/content"
+import { createPageMetadata } from "@/lib/metadata"
 
-export const metadata: Metadata = {
-  title: pages.privacy.title,
-  description: pages.privacy.intro,
-}
+export const metadata = createPageMetadata(
+  pages.privacy.title,
+  pages.privacy.intro,
+  "/privacy"
+)
 
 export default function PrivacyPage() {
   return (
-    <div className="pb-24">
-      <section className="border-b border-border/60 bg-muted py-24 sm:py-32">
+    <div className="pb-16 sm:pb-24">
+      <section className="border-b border-border/60 bg-muted py-14 sm:py-20 lg:py-24">
         <Container>
           <h1 className="text-3xl font-semibold tracking-tight text-foreground sm:text-4xl font-serif">
             {pages.privacy.title}
@@ -21,7 +22,7 @@ export default function PrivacyPage() {
           </p>
         </Container>
       </section>
-      <section className="py-24 sm:py-32">
+      <section className="py-16 sm:py-24">
         <Container>
           <Prose>
             {pages.privacy.sections.map((section) => (

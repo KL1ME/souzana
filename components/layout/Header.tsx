@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button"
 import {
   Sheet,
   SheetContent,
+  SheetDescription,
   SheetHeader,
   SheetTitle,
   SheetTrigger,
@@ -28,15 +29,16 @@ export default function Header() {
 
   return (
     <header className="sticky top-0 z-40 border-b border-accent/30 bg-background/90 backdrop-blur">
-      <div className="mx-auto flex h-24 w-full max-w-[1200px] items-center justify-between px-6">
+      <div className="mx-auto flex h-20 w-full max-w-[1200px] items-center justify-between px-5 sm:h-24 sm:px-6">
         <Link
           href="/"
-          className="flex flex-col gap-1 text-base font-semibold tracking-[0.02em] leading-none"
+          className="min-w-0 flex flex-col gap-1 text-base font-semibold leading-none"
+          aria-label={`${site.wordmark.title} — ${site.wordmark.subtitle}`}
         >
-          <span className="font-serif text-4xl tracking-[0.08em] sm:text-5xl">
+          <span className="whitespace-nowrap font-serif text-[2rem] tracking-[0.035em] sm:text-4xl lg:text-[2.85rem]">
             {site.wordmark.title}
           </span>
-          <span className="text-[0.6rem] uppercase tracking-[0.5em] text-muted-foreground">
+          <span className="text-[0.55rem] uppercase tracking-[0.38em] text-muted-foreground sm:text-[0.6rem] sm:tracking-[0.5em]">
             {site.wordmark.subtitle}
           </span>
         </Link>
@@ -64,29 +66,32 @@ export default function Header() {
             <Button
               variant="ghost"
               size="icon"
-              className="md:hidden"
-              aria-label="Άνοιγμα μενού"
+              className="size-11 md:hidden"
+              aria-label={isMenuOpen ? "Κλείσιμο μενού" : "Άνοιγμα μενού"}
             >
-              <Menu className="size-5" />
+              <Menu className="size-6" />
             </Button>
           </SheetTrigger>
           <SheetContent
             side="right"
-            className="w-[86vw] border-l border-border/70 bg-background p-0 sm:max-w-sm"
+            className="w-[88vw] max-w-[360px] overflow-y-auto border-l border-border/70 bg-background p-0"
           >
             <SheetHeader className="border-b border-border/70 px-6 pt-6 pb-4">
               <SheetTitle className="text-left font-serif text-2xl tracking-[0.02em]">
                 Πλοήγηση
               </SheetTitle>
+              <SheetDescription className="sr-only">
+                Επιλέξτε σελίδα ή μεταβείτε στην επικοινωνία.
+              </SheetDescription>
             </SheetHeader>
-            <div className="flex flex-col gap-5 px-6 py-6">
+            <div className="flex flex-col gap-4 px-6 py-6">
               {site.nav.map((item) => (
                 <Link
                   key={item.href}
                   href={item.href}
                   onClick={() => setIsMenuOpen(false)}
                   className={cn(
-                    "text-[2rem] text-muted-foreground transition-colors hover:text-foreground",
+                    "rounded-md py-1 text-[1.85rem] leading-tight text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60",
                     isActive(item.href) && "text-foreground"
                   )}
                   aria-current={isActive(item.href) ? "page" : undefined}
@@ -94,7 +99,7 @@ export default function Header() {
                   {item.label}
                 </Link>
               ))}
-              <Button asChild className="mt-3 w-full">
+              <Button asChild className="mt-4 w-full">
                 <Link href="/contact" onClick={() => setIsMenuOpen(false)}>
                   Κλείστε συνάντηση
                 </Link>

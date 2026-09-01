@@ -9,26 +9,29 @@ import { iconMap } from "@/lib/icons"
 
 export default function PracticeAreasPreview() {
   return (
-    <section className="py-24 sm:py-32">
+    <section className="py-16 sm:py-24 lg:py-28">
       <Container>
         <div className="grid gap-12 lg:grid-cols-[1.1fr_0.9fr] lg:items-start">
-          <div className="order-2 space-y-10 lg:order-1">
+          <div className="space-y-8 sm:space-y-10">
             <SectionHeader
               eyebrow={home.practicePreview.eyebrow}
               title={home.practicePreview.title}
               description={home.practicePreview.description}
             />
-            <div className="grid gap-6 md:grid-cols-2">
-              {practiceAreas.slice(0, 4).map((area) => {
+            <div className="grid gap-4 sm:gap-6 md:grid-cols-2">
+              {practiceAreas.slice(0, 4).map((area, index) => {
                 const Icon = iconMap[area.icon]
                 return (
-                  <Card key={area.slug} className="transition-colors">
-                    <div className="flex items-center gap-3 text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+                  <Card
+                    key={area.slug}
+                    className={index === 3 ? "hidden transition-colors md:flex" : "transition-colors"}
+                  >
+                    <h3 className="flex items-center gap-3 text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
                       <span className="inline-flex size-9 items-center justify-center rounded-full border border-border/50 bg-muted">
                         <Icon className="size-4 text-accent" />
                       </span>
                       {area.title}
-                    </div>
+                    </h3>
                     <CardContent className="space-y-4">
                       <p className="text-sm text-muted-foreground">
                         {area.shortDescription}
@@ -46,13 +49,13 @@ export default function PracticeAreasPreview() {
                 )
               })}
             </div>
-            <Button asChild variant="outline" className="h-11">
+            <Button asChild variant="outline" className="h-12 w-full sm:w-auto">
               <Link href={home.practicePreview.ctaHref}>
                 {home.practicePreview.ctaLabel}
               </Link>
             </Button>
           </div>
-          <div className="order-1 lg:order-2">
+          <div className="hidden lg:block">
             <div className="relative aspect-video overflow-hidden rounded-3xl border border-border/50">
               <Image
                 src={home.practicePreview.image.src}

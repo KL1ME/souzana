@@ -1,4 +1,3 @@
-import type { Metadata } from "next"
 import Link from "next/link"
 import { ExternalLink } from "lucide-react"
 import Container from "@/components/layout/Container"
@@ -6,32 +5,35 @@ import SectionHeader from "@/components/layout/SectionHeader"
 import { Card } from "@/components/ui/card"
 import { media, pages } from "@/lib/content"
 import { formatDate } from "@/lib/format"
+import { createPageMetadata } from "@/lib/metadata"
 
-export const metadata: Metadata = {
-  title: pages.media.title,
-  description: pages.media.description,
-}
+export const metadata = createPageMetadata(
+  pages.media.title,
+  pages.media.description,
+  "/media"
+)
 
 export default function MediaPage() {
   return (
-    <div className="pb-24">
-      <section className="border-b border-border/60 bg-muted py-24 sm:py-32">
+    <div className="pb-16 sm:pb-24">
+      <section className="border-b border-border/60 bg-muted py-14 sm:py-20 lg:py-24">
         <Container>
           <SectionHeader
             eyebrow={pages.media.eyebrow}
             title={pages.media.title}
             description={pages.media.description}
+            headingLevel="h1"
           />
         </Container>
       </section>
-      <section className="py-24 sm:py-32">
-        <Container className="space-y-16">
+      <section className="py-16 sm:py-24">
+        <Container className="space-y-14 sm:space-y-16">
           {media.sections.map((section) => (
             <div key={section.title} className="space-y-8">
               <div className="space-y-2">
-                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+                <h2 className="font-serif text-2xl font-semibold text-foreground sm:text-3xl">
                   {section.title}
-                </p>
+                </h2>
                 {section.description ? (
                   <p className="text-sm text-muted-foreground max-w-2xl">
                     {section.description}

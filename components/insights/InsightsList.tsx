@@ -7,13 +7,14 @@ import { formatDate } from "@/lib/format"
 export default function InsightsList() {
   return (
     <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-      {posts.map((post) => (
+      {posts.map((post, index) => (
         <Card key={post.slug} className="gap-4">
           <div className="relative aspect-[16/9] overflow-hidden rounded-xl border border-border/60">
             <Image
               src={post.image.src}
               alt={post.image.alt}
               fill
+              loading={index === 0 ? "eager" : "lazy"}
               className="object-cover"
               sizes="(min-width: 1024px) 30vw, 90vw"
             />
@@ -22,9 +23,9 @@ export default function InsightsList() {
             {formatDate(post.date)}
           </div>
           <div className="space-y-3">
-            <h3 className="text-lg font-semibold tracking-tight text-foreground font-serif">
+            <h2 className="font-serif text-lg font-semibold tracking-tight text-foreground">
               {post.title}
-            </h3>
+            </h2>
             <p className="text-sm text-muted-foreground">{post.excerpt}</p>
           </div>
           <Link

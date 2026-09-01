@@ -5,7 +5,7 @@ import { notFound } from "next/navigation"
 import Container from "@/components/layout/Container"
 import { Card } from "@/components/ui/card"
 import Prose from "@/components/typography/Prose"
-import { pages, posts } from "@/lib/content"
+import { pages, posts, site } from "@/lib/content"
 import { formatDate, slugify } from "@/lib/format"
 
 const buildToc = (content: typeof posts[number]["content"]) =>
@@ -33,9 +33,29 @@ export async function generateMetadata({
   if (!post) {
     return { title: "Insight" }
   }
+  const imagePath = post.image.src.replace(/^\/souzana/, "")
+  const imageUrl = `${site.url}${imagePath}`
+
   return {
     title: post.title,
     description: post.excerpt,
+    alternates: {
+      canonical: `${site.url}/insights/${post.slug}/`,
+    },
+    openGraph: {
+      type: "article",
+      title: post.title,
+      description: post.excerpt,
+      url: `${site.url}/insights/${post.slug}/`,
+      publishedTime: post.date,
+      images: [{ url: imageUrl, alt: post.image.alt }],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: post.title,
+      description: post.excerpt,
+      images: [imageUrl],
+    },
   }
 }
 
@@ -50,14 +70,14 @@ export default async function InsightDetail({ params }: { params: Promise<{ slug
   const related = posts.filter((item) => item.slug !== post.slug).slice(0, 2)
 
   return (
-    <div className="pb-24">
-      <section className="border-b border-border/60 bg-muted py-24 sm:py-32">
+    <div className="pb-16 sm:pb-24">
+      <section className="border-b border-border/60 bg-muted py-14 sm:py-20 lg:py-24">
         <Container>
           <div className="space-y-6">
             <p className="text-xs font-semibold uppercase tracking-[0.3em] text-muted-foreground">
               {pages.insights.eyebrow}
             </p>
-            <h1 className="text-3xl font-semibold tracking-tight text-foreground sm:text-4xl font-serif">
+            <h1 className="font-serif text-[2rem] font-semibold leading-[1.08] tracking-tight text-foreground sm:text-4xl">
               {post.title}
             </h1>
             <div className="text-sm text-muted-foreground">
@@ -66,11 +86,12 @@ export default async function InsightDetail({ params }: { params: Promise<{ slug
             <p className="text-base text-muted-foreground max-w-2xl">
               {post.excerpt}
             </p>
-            <div className="relative mt-8 aspect-[16/9] overflow-hidden rounded-3xl border border-border/60">
+            <div className="relative mt-8 aspect-[16/9] overflow-hidden rounded-2xl border border-border/60 sm:rounded-3xl">
               <Image
                 src={post.image.src}
                 alt={post.image.alt}
                 fill
+                loading="eager"
                 className="object-cover"
                 sizes="(min-width: 1024px) 70vw, 100vw"
               />
@@ -78,7 +99,7 @@ export default async function InsightDetail({ params }: { params: Promise<{ slug
           </div>
         </Container>
       </section>
-      <section className="py-24 sm:py-32">
+      <section className="py-16 sm:py-24">
         <Container className="grid gap-12 lg:grid-cols-[1fr_280px]">
           <article>
             <Prose>

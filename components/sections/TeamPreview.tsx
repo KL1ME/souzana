@@ -9,15 +9,15 @@ export default function TeamPreview() {
   const profile = pages.team.profile
 
   return (
-    <section className="py-24 sm:py-32">
-      <Container className="space-y-12">
+    <section className="border-t border-border/60 py-16 sm:py-24 lg:py-28">
+      <Container className="space-y-8 sm:space-y-12">
         <SectionHeader
           eyebrow={home.teamPreview.eyebrow}
           title={home.teamPreview.title}
           description={home.teamPreview.description}
         />
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          <Link href="/team" className="group space-y-4 block">
+        <div className="scrollbar-none -mx-5 flex snap-x snap-mandatory gap-4 overflow-x-auto px-5 pb-2 sm:mx-0 sm:grid sm:grid-cols-2 sm:gap-6 sm:overflow-visible sm:px-0 sm:pb-0 lg:grid-cols-4">
+          <Link href="/team" className="group block min-w-[76vw] snap-start space-y-4 sm:min-w-0">
             <div className="relative aspect-[4/5] overflow-hidden rounded-2xl border border-border/50 transition-shadow group-hover:shadow-md">
               <Image
                 src={profile.image.src}
@@ -28,14 +28,14 @@ export default function TeamPreview() {
               />
             </div>
             <div>
-              <p className="text-base font-semibold text-foreground">
+              <h3 className="text-base font-semibold text-foreground">
                 {profile.title}
-              </p>
+              </h3>
               <p className="text-sm text-muted-foreground">{profile.role}</p>
             </div>
           </Link>
           {teamMembers.slice(0, 3).map((member) => (
-            <Link key={member.name} href="/team" className="group space-y-4 block">
+            <Link key={member.name} href="/team" className="group block min-w-[76vw] snap-start space-y-4 sm:min-w-0">
               {member.image ? (
                 <div className="relative aspect-[4/5] overflow-hidden rounded-2xl border border-border/50 transition-shadow group-hover:shadow-md">
                   <Image
@@ -54,15 +54,15 @@ export default function TeamPreview() {
                 </div>
               )}
               <div>
-                <p className="text-base font-semibold text-foreground">
+                <h3 className="text-base font-semibold text-foreground">
                   {member.name}
-                </p>
+                </h3>
                 <p className="text-sm text-muted-foreground">{member.title}</p>
               </div>
             </Link>
           ))}
         </div>
-        <Button asChild variant="outline" className="h-11">
+        <Button asChild variant="outline" className="h-12 w-full sm:w-auto">
           <Link href={home.teamPreview.ctaHref}>
             {home.teamPreview.ctaLabel}
           </Link>

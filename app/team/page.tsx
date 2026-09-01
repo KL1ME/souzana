@@ -1,32 +1,34 @@
-import type { Metadata } from "next"
 import Image from "next/image"
 import Link from "next/link"
 import Container from "@/components/layout/Container"
 import SectionHeader from "@/components/layout/SectionHeader"
 import { Card } from "@/components/ui/card"
 import { pages, teamMembers } from "@/lib/content"
+import { createPageMetadata } from "@/lib/metadata"
 
-export const metadata: Metadata = {
-  title: pages.team.title,
-  description: pages.team.description,
-}
+export const metadata = createPageMetadata(
+  pages.team.title,
+  pages.team.description,
+  "/team"
+)
 
 export default function TeamPage() {
   const members = teamMembers
   const profile = pages.team.profile
 
   return (
-    <div className="pb-24">
-      <section className="border-b border-border/60 bg-muted py-24 sm:py-32">
+    <div className="pb-16 sm:pb-24">
+      <section className="border-b border-border/60 bg-muted py-14 sm:py-20 lg:py-24">
         <Container>
           <SectionHeader
             eyebrow={pages.team.eyebrow}
             title={pages.team.title}
             description={pages.team.description}
+            headingLevel="h1"
           />
         </Container>
       </section>
-      <section className="py-24 sm:py-32">
+      <section className="py-16 sm:py-24">
         <Container className="grid gap-12 lg:grid-cols-[0.85fr_1.15fr]">
           <div className="space-y-6">
             <div className="relative aspect-[4/5] overflow-hidden rounded-3xl border border-border/60">
@@ -34,6 +36,7 @@ export default function TeamPage() {
                 src={profile.image.src}
                 alt={profile.image.alt}
                 fill
+                loading="eager"
                 className="object-cover"
                 sizes="(min-width: 1024px) 40vw, 90vw"
               />
@@ -144,7 +147,7 @@ export default function TeamPage() {
           </div>
         </Container>
       </section>
-      <section className="py-24 sm:py-32">
+      <section className="border-t border-border/60 py-16 sm:py-24">
         <Container className="space-y-10">
           <SectionHeader
             eyebrow="Δίκτυο συνεργατών"

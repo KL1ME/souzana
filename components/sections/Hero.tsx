@@ -7,39 +7,39 @@ import { home } from "@/lib/content"
 export default function Hero() {
   return (
     <section className="border-b border-accent/20 bg-background">
-      <Container className="py-24 sm:py-32">
-        <div className="grid gap-12 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
-          <div className="space-y-8">
+      <Container className="py-14 sm:py-20 lg:py-24">
+        <div className="grid gap-10 lg:grid-cols-[1.08fr_0.92fr] lg:items-center lg:gap-14">
+          <div className="space-y-7 sm:space-y-8">
             <div className="space-y-4">
               <p className="text-[0.7rem] font-semibold uppercase tracking-[0.4em] text-muted-foreground">
                 {home.hero.eyebrow}
               </p>
               <div className="hairline-gold w-28" />
             </div>
-            <h1 className="text-4xl font-semibold leading-[1.1] tracking-[0.02em] text-foreground sm:text-5xl lg:text-6xl font-serif">
+            <h1 className="font-serif text-[2.5rem] font-semibold leading-[1.04] tracking-[0.01em] text-foreground sm:text-5xl lg:text-6xl">
               {home.hero.title}
             </h1>
-            <p className="text-base text-muted-foreground sm:text-lg max-w-xl">
+            <p className="max-w-xl text-base leading-relaxed text-muted-foreground sm:text-lg">
               {home.hero.subtitle}
             </p>
-            <div className="flex flex-wrap gap-4">
-              <Button asChild size="lg">
+            <div className="grid gap-3 sm:flex sm:flex-wrap sm:gap-4">
+              <Button asChild size="lg" className="w-full sm:w-auto">
                 <Link href={home.hero.primaryCta.href}>
                   {home.hero.primaryCta.label}
                 </Link>
               </Button>
-              <Button asChild variant="outline" size="lg">
+              <Button asChild variant="outline" size="lg" className="w-full sm:w-auto">
                 <Link href={home.hero.secondaryCta.href}>
                   {home.hero.secondaryCta.label}
                 </Link>
               </Button>
             </div>
-            <p className="text-sm text-muted-foreground max-w-xl">
+            <p className="max-w-xl text-sm leading-relaxed text-muted-foreground">
               {home.hero.trustLine}
             </p>
           </div>
           <div className="relative">
-            <div className="relative aspect-[3/2] overflow-hidden rounded-3xl border border-border/50">
+            <div className="relative aspect-[4/3] overflow-hidden rounded-2xl border border-border/50 sm:aspect-[3/2] sm:rounded-3xl">
               <Image
                 src={home.hero.image.src}
                 alt={home.hero.image.alt}
@@ -51,6 +51,13 @@ export default function Hero() {
             </div>
           </div>
         </div>
+        <ul className="mt-10 grid grid-cols-2 gap-x-5 gap-y-4 border-t border-border/70 pt-6 text-[0.68rem] font-semibold uppercase leading-relaxed tracking-[0.14em] text-muted-foreground sm:mt-14 sm:grid-cols-4 sm:gap-6 sm:text-xs">
+          {home.hero.credentials.map((credential) => (
+            <li key={credential} className="border-l border-accent/50 pl-3">
+              {credential}
+            </li>
+          ))}
+        </ul>
       </Container>
     </section>
   )

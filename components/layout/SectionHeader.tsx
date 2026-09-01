@@ -5,6 +5,7 @@ type SectionHeaderProps = {
   title: string
   description?: string
   align?: "left" | "center"
+  headingLevel?: "h1" | "h2"
 }
 
 export default function SectionHeader({
@@ -12,7 +13,10 @@ export default function SectionHeader({
   title,
   description,
   align = "left",
+  headingLevel = "h2",
 }: SectionHeaderProps) {
+  const Heading = headingLevel
+
   return (
     <div
       className={cn(
@@ -28,9 +32,9 @@ export default function SectionHeader({
           <div className="hairline-gold w-24" />
         </div>
       ) : null}
-      <h2 className="text-3xl font-semibold tracking-[0.02em] text-foreground sm:text-4xl font-serif">
+      <Heading className="font-serif text-[2rem] font-semibold leading-[1.08] tracking-[0.01em] text-foreground sm:text-4xl">
         {title}
-      </h2>
+      </Heading>
       {description ? (
         <p
           className={cn(

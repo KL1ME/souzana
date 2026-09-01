@@ -23,6 +23,9 @@ export const metadata: Metadata = {
     template: `%s | ${site.name}`,
   },
   description: site.seo.description,
+  alternates: {
+    canonical: `${site.url}/`,
+  },
   openGraph: {
     title: site.seo.title,
     description: site.seo.description,
@@ -30,6 +33,20 @@ export const metadata: Metadata = {
     siteName: site.name,
     locale: "el_GR",
     type: "website",
+    images: [
+      {
+        url: `${site.url}/og.png`,
+        width: 1200,
+        height: 630,
+        alt: `${site.name} — Δικηγορικό Γραφείο`,
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: site.seo.title,
+    description: site.seo.description,
+    images: [`${site.url}/og.png`],
   },
 }
 
@@ -51,12 +68,12 @@ export default function RootLayout({
       postalCode: "106 74",
       addressCountry: "GR",
     },
-    telephone: site.contact.phone,
+    ...(site.contact.phone ? { telephone: site.contact.phone } : {}),
     email: site.contact.email,
   }
 
   return (
-    <html lang="el" className="scroll-smooth">
+    <html lang="el" className="scroll-smooth" data-scroll-behavior="smooth">
       <body
         className={`${inter.variable} ${cormorant.variable} bg-background text-foreground font-sans antialiased`}
       >

@@ -1,30 +1,32 @@
-import type { Metadata } from "next"
 import Image from "next/image"
 import Container from "@/components/layout/Container"
 import SectionHeader from "@/components/layout/SectionHeader"
 import ContactForm from "@/components/forms/ContactForm"
 import { pages, site } from "@/lib/content"
+import { createPageMetadata } from "@/lib/metadata"
 
-export const metadata: Metadata = {
-  title: pages.contact.title,
-  description: pages.contact.description,
-}
+export const metadata = createPageMetadata(
+  pages.contact.title,
+  pages.contact.description,
+  "/contact"
+)
 
 export default function ContactPage() {
   return (
-    <div className="pb-24">
-      <section className="border-b border-border/60 bg-muted py-24 sm:py-32">
+    <div className="pb-16 sm:pb-24">
+      <section className="border-b border-border/60 bg-muted py-14 sm:py-20 lg:py-24">
         <Container>
           <SectionHeader
             eyebrow={pages.contact.eyebrow}
             title={pages.contact.title}
             description={pages.contact.description}
+            headingLevel="h1"
           />
         </Container>
       </section>
-      <section className="py-24 sm:py-32">
+      <section className="py-16 sm:py-24">
         <Container className="grid gap-12 lg:grid-cols-[1.1fr_0.9fr]">
-          <div className="rounded-3xl border border-border/60 bg-card p-8 md:p-10">
+          <div className="rounded-3xl border border-border/60 bg-card p-5 sm:p-8 md:p-10">
             <ContactForm />
           </div>
           <div className="space-y-8">
@@ -47,15 +49,17 @@ export default function ContactPage() {
               <div className="mt-4 space-y-2 text-sm text-muted-foreground">
                 <p>{site.contact.address}</p>
                 <p>{site.contact.hours}</p>
-                <a
-                  href={`tel:${site.contact.phone.replace(/\s/g, "")}`}
-                  className="inline-flex transition-colors hover:text-foreground"
-                >
-                  {site.contact.phone}
-                </a>
+                {site.contact.phone ? (
+                  <a
+                    href={`tel:${site.contact.phone.replace(/\s/g, "")}`}
+                    className="inline-flex transition-colors hover:text-foreground"
+                  >
+                    {site.contact.phone}
+                  </a>
+                ) : null}
                 <a
                   href={`mailto:${site.contact.email}`}
-                  className="inline-flex transition-colors hover:text-foreground"
+                  className="inline-flex break-all transition-colors hover:text-foreground sm:break-normal"
                 >
                   {site.contact.email}
                 </a>
