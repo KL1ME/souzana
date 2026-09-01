@@ -1,6 +1,6 @@
 # Souzana Klimentidi Law Office Website
 
-Professional website for Souzana Klimentidi, a law office based in Athens. The project presents practice areas, team profiles, legal insights, media appearances, privacy information, and a contact flow in a polished Greek-language experience.
+Professional website for Klimentidi – Tsilivaraki & Associates, a law firm with its central office in Kalamata and a branch in Athens. The project presents practice areas, team profiles, legal insights, media appearances, privacy information, and a contact flow in a polished Greek-language experience.
 
 ## Live site
 

@@ -5,7 +5,7 @@ const socialImage = {
   url: `${site.url}/og.png`,
   width: 1200,
   height: 630,
-  alt: `${site.name} — Δικηγορικό Γραφείο`,
+  alt: `${site.shortName} — Δικηγορική Εταιρεία`,
 }
 
 export function createPageMetadata(
@@ -24,7 +24,7 @@ export function createPageMetadata(
       title,
       description,
       url,
-      siteName: site.name,
+      siteName: site.shortName,
       locale: "el_GR",
       type: "website",
       images: [socialImage],

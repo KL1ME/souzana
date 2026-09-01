@@ -41,13 +41,22 @@ export default function ContactPage() {
             </div>
             <div className="rounded-3xl border border-border/60 bg-card p-8">
               <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
-                Γραφείο
+                Γραφεία
               </p>
               <h3 className="mt-3 text-2xl font-semibold font-serif">
                 {site.city}
               </h3>
-              <div className="mt-4 space-y-2 text-sm text-muted-foreground">
-                <p>{site.contact.address}</p>
+              <div className="mt-5 grid gap-4 text-sm sm:grid-cols-2">
+                {site.contact.offices.map((office) => (
+                  <div key={office.label} className="border-l border-accent/50 pl-3">
+                    <p className="text-xs font-semibold uppercase tracking-[0.14em] text-foreground">
+                      {office.label}
+                    </p>
+                    <p className="mt-1 text-muted-foreground">{office.address}</p>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-5 flex flex-col items-start gap-2 text-sm text-muted-foreground">
                 <p>{site.contact.hours}</p>
                 {site.contact.phone ? (
                   <a

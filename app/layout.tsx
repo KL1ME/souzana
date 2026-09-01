@@ -20,7 +20,7 @@ export const metadata: Metadata = {
   metadataBase: new URL(site.url),
   title: {
     default: site.seo.title,
-    template: `%s | ${site.name}`,
+    template: `%s | ${site.shortName}`,
   },
   description: site.seo.description,
   alternates: {
@@ -30,7 +30,7 @@ export const metadata: Metadata = {
     title: site.seo.title,
     description: site.seo.description,
     url: site.url,
-    siteName: site.name,
+    siteName: site.shortName,
     locale: "el_GR",
     type: "website",
     images: [
@@ -38,7 +38,7 @@ export const metadata: Metadata = {
         url: `${site.url}/og.png`,
         width: 1200,
         height: 630,
-        alt: `${site.name} — Δικηγορικό Γραφείο`,
+        alt: `${site.shortName} — Δικηγορική Εταιρεία`,
       },
     ],
   },
@@ -60,14 +60,13 @@ export default function RootLayout({
     "@type": "LegalService",
     name: site.name,
     url: site.url,
-    areaServed: "Αθήνα, Ελλάδα",
-    address: {
+    areaServed: ["Καλαμάτα, Ελλάδα", "Αθήνα, Ελλάδα"],
+    address: site.contact.offices.map((office) => ({
       "@type": "PostalAddress",
-      streetAddress: site.contact.address,
-      addressLocality: "Αθήνα",
-      postalCode: "106 74",
+      streetAddress: office.streetAddress,
+      addressLocality: office.city,
       addressCountry: "GR",
-    },
+    })),
     ...(site.contact.phone ? { telephone: site.contact.phone } : {}),
     email: site.contact.email,
   }

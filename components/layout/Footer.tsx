@@ -8,10 +8,11 @@ export default function Footer() {
       <Container className="grid gap-10 py-12 sm:py-16 md:grid-cols-[1.1fr_1fr_1fr]">
         <div className="space-y-4">
           <div className="space-y-1">
-            <p className="font-serif text-2xl tracking-[0.06em] sm:text-3xl">
-              {site.wordmark.title}
+            <p className="flex flex-col font-serif text-xl leading-tight tracking-[0.02em] sm:text-2xl">
+              <span>{site.wordmark.primary}</span>
+              <span>{site.wordmark.secondary}</span>
             </p>
-            <p className="text-[0.65rem] uppercase tracking-[0.5em] text-muted-foreground">
+            <p className="text-[0.58rem] uppercase tracking-[0.25em] text-muted-foreground">
               {site.wordmark.subtitle}
             </p>
           </div>
@@ -19,7 +20,16 @@ export default function Footer() {
         </div>
         <div className="flex flex-col items-start gap-3 text-sm">
           <p className="font-semibold text-foreground">Επικοινωνία</p>
-          <p className="text-muted-foreground">{site.contact.address}</p>
+          <div className="space-y-3">
+            {site.contact.offices.map((office) => (
+              <div key={office.label}>
+                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-foreground">
+                  {office.label}
+                </p>
+                <p className="mt-1 text-muted-foreground">{office.address}</p>
+              </div>
+            ))}
+          </div>
           <p className="text-muted-foreground">{site.contact.hours}</p>
           {site.contact.phone ? (
             <a

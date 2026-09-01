@@ -32,13 +32,14 @@ export default function Header() {
       <div className="mx-auto flex h-20 w-full max-w-[1200px] items-center justify-between px-5 sm:h-24 sm:px-6">
         <Link
           href="/"
-          className="min-w-0 flex flex-col gap-1 text-base font-semibold leading-none"
-          aria-label={`${site.wordmark.title} — ${site.wordmark.subtitle}`}
+          className="flex min-w-0 max-w-[275px] flex-col gap-1 font-semibold leading-none sm:max-w-[420px]"
+          aria-label={site.name}
         >
-          <span className="whitespace-nowrap font-serif text-[2rem] tracking-[0.035em] sm:text-4xl lg:text-[2.85rem]">
-            {site.wordmark.title}
+          <span className="flex flex-col font-serif text-[1.05rem] leading-[0.98] tracking-[0.02em] text-foreground sm:text-xl lg:text-[1.35rem]">
+            <span>{site.wordmark.primary}</span>
+            <span>{site.wordmark.secondary}</span>
           </span>
-          <span className="text-[0.55rem] uppercase tracking-[0.38em] text-muted-foreground sm:text-[0.6rem] sm:tracking-[0.5em]">
+          <span className="text-[0.46rem] uppercase tracking-[0.18em] text-muted-foreground sm:text-[0.55rem] sm:tracking-[0.28em]">
             {site.wordmark.subtitle}
           </span>
         </Link>
