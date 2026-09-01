@@ -8,11 +8,11 @@ export default function Footer() {
       <Container className="grid gap-10 py-12 sm:py-16 md:grid-cols-[1.1fr_1fr_1fr]">
         <div className="space-y-4">
           <div className="space-y-1">
-            <p className="flex flex-col font-serif text-xl leading-tight tracking-[0.02em] sm:text-2xl">
-              <span>{site.wordmark.primary}</span>
-              <span>{site.wordmark.secondary}</span>
+            <p className="font-serif text-xl font-semibold leading-tight tracking-[0.025em] sm:text-2xl">
+              {site.wordmark.primary}
             </p>
             <p className="text-[0.58rem] uppercase tracking-[0.25em] text-muted-foreground">
+              {site.wordmark.secondary} <span aria-hidden="true">•</span>{" "}
               {site.wordmark.subtitle}
             </p>
           </div>
