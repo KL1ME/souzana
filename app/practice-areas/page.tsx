@@ -24,32 +24,68 @@ export default function PracticeAreasPage() {
             description={pages.practice.description}
             headingLevel="h1"
           />
+          <div className="mt-8 max-w-3xl space-y-4 text-base leading-relaxed text-muted-foreground">
+            {pages.practice.intro.map((paragraph) => (
+              <p key={paragraph}>{paragraph}</p>
+            ))}
+          </div>
         </Container>
       </section>
       <section className="py-16 sm:py-24">
-        <Container>
-          <div className="grid gap-4 sm:gap-6 md:grid-cols-2">
-            {practiceAreas.map((area) => {
+        <Container className="space-y-12">
+          <nav aria-label="Μετάβαση σε τομέα εξειδίκευσης">
+            <ul className="grid gap-2 text-sm sm:grid-cols-2 lg:grid-cols-3">
+              {practiceAreas.map((area, index) => (
+                <li key={area.slug}>
+                  <a
+                    href={`#${area.slug}`}
+                    className="flex h-full items-center gap-3 rounded-xl border border-border/70 px-4 py-3 text-foreground/80 transition-colors hover:border-accent/70 hover:text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+                  >
+                    <span className="font-serif text-lg text-accent" aria-hidden="true">
+                      {String(index + 1).padStart(2, "0")}
+                    </span>
+                    <span>{area.title}</span>
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </nav>
+          <div className="space-y-6">
+            {practiceAreas.map((area, index) => {
               const Icon = iconMap[area.icon]
               return (
-                <Card key={area.slug} className="gap-6">
-                  <h2 className="flex items-center gap-3 text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+                <Card key={area.slug} id={area.slug} className="scroll-mt-24 gap-6 sm:p-8">
+                  <h2 className="flex items-center gap-4 font-serif text-2xl font-semibold text-foreground sm:text-3xl">
                     <span className="inline-flex size-10 items-center justify-center rounded-full border border-border/50 bg-muted">
                       <Icon className="size-4 text-accent" />
                     </span>
-                    {area.title}
+                    <span className="text-accent" aria-hidden="true">
+                      {String(index + 1).padStart(2, "0")}
+                    </span>
+                    <span>{area.title}</span>
                   </h2>
-                  <p className="text-sm text-muted-foreground">
-                    {area.shortDescription}
-                  </p>
-                  <ul className="space-y-2 text-sm text-foreground/80">
-                    {area.bullets.map((bullet) => (
-                      <li key={bullet} className="flex items-start gap-2">
-                        <span className="mt-1 size-1.5 rounded-full bg-accent" />
-                        <span>{bullet}</span>
-                      </li>
-                    ))}
-                  </ul>
+                  <div className={area.bullets.length ? "grid gap-6 lg:grid-cols-2 lg:gap-10" : "max-w-4xl"}>
+                    <div className="space-y-4 text-sm leading-relaxed text-muted-foreground sm:text-base">
+                      {area.details.map((paragraph) => (
+                        <p key={paragraph}>{paragraph}</p>
+                      ))}
+                    </div>
+                    {area.bullets.length ? (
+                      <div>
+                        <h3 className="mb-4 text-sm font-semibold text-foreground">
+                          {area.slug === "criminal-law" ? "Ενδεικτικά αναλαμβάνουμε υποθέσεις που αφορούν" : "Ενδεικτικά αναλαμβάνουμε"}
+                        </h3>
+                        <ul className="space-y-2 text-sm leading-relaxed text-foreground/80">
+                          {area.bullets.map((bullet) => (
+                            <li key={bullet} className="flex items-start gap-2">
+                              <span className="mt-2 size-1.5 shrink-0 rounded-full bg-accent" />
+                              <span>{bullet}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    ) : null}
+                  </div>
                 </Card>
               )
             })}
