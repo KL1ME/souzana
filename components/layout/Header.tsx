@@ -58,9 +58,6 @@ export default function Header() {
               {item.label}
             </Link>
           ))}
-          <Button asChild variant="outline" className="ml-2 h-9">
-            <Link href="/contact">Κλείστε συνάντηση</Link>
-          </Button>
         </nav>
         <Sheet open={isMenuOpen} onOpenChange={setIsMenuOpen}>
           <SheetTrigger asChild>
@@ -100,11 +97,6 @@ export default function Header() {
                   {item.label}
                 </Link>
               ))}
-              <Button asChild className="mt-4 w-full">
-                <Link href="/contact" onClick={() => setIsMenuOpen(false)}>
-                  Κλείστε συνάντηση
-                </Link>
-              </Button>
             </div>
           </SheetContent>
         </Sheet>

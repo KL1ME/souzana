@@ -1,7 +1,5 @@
 import Image from "next/image"
-import Link from "next/link"
 import Container from "@/components/layout/Container"
-import { Button } from "@/components/ui/button"
 import { home } from "@/lib/content"
 
 export default function Hero() {
@@ -21,21 +19,6 @@ export default function Hero() {
             </h1>
             <p className="max-w-xl text-base leading-relaxed text-muted-foreground sm:text-lg">
               {home.hero.subtitle}
-            </p>
-            <div className="grid gap-3 sm:flex sm:flex-wrap sm:gap-4">
-              <Button asChild size="lg" className="w-full sm:w-auto">
-                <Link href={home.hero.primaryCta.href}>
-                  {home.hero.primaryCta.label}
-                </Link>
-              </Button>
-              <Button asChild variant="outline" size="lg" className="w-full sm:w-auto">
-                <Link href={home.hero.secondaryCta.href}>
-                  {home.hero.secondaryCta.label}
-                </Link>
-              </Button>
-            </div>
-            <p className="max-w-xl text-sm leading-relaxed text-muted-foreground">
-              {home.hero.trustLine}
             </p>
           </div>
           <div className="relative">
