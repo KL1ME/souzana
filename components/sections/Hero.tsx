@@ -39,7 +39,7 @@ export default function Hero() {
             </p>
           </div>
           <div className="relative">
-            <div className="relative aspect-[4/3] overflow-hidden rounded-2xl border border-border/50 sm:aspect-[3/2] sm:rounded-3xl">
+            <div className="relative aspect-[4/3] overflow-hidden sm:aspect-[3/2]">
               <Image
                 src={home.hero.image.src}
                 alt={home.hero.image.alt}

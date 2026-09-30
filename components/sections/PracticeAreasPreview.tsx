@@ -1,71 +1,49 @@
-import Image from "next/image"
 import Link from "next/link"
 import Container from "@/components/layout/Container"
 import SectionHeader from "@/components/layout/SectionHeader"
-import { Card, CardContent } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
 import { home, practiceAreas } from "@/lib/content"
-import { iconMap } from "@/lib/icons"
 
 export default function PracticeAreasPreview() {
   return (
-    <section className="py-16 sm:py-24 lg:py-28">
-      <Container>
-        <div className="grid gap-12 lg:grid-cols-[1.1fr_0.9fr] lg:items-start">
-          <div className="space-y-8 sm:space-y-10">
-            <SectionHeader
-              eyebrow={home.practicePreview.eyebrow}
-              title={home.practicePreview.title}
-              description={home.practicePreview.description}
-            />
-            <div className="grid gap-4 sm:gap-6 md:grid-cols-2">
-              {practiceAreas.slice(0, 4).map((area, index) => {
-                const Icon = iconMap[area.icon]
-                return (
-                  <Card
-                    key={area.slug}
-                    className={index === 3 ? "hidden transition-colors md:flex" : "transition-colors"}
-                  >
-                    <h3 className="flex items-center gap-3 text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
-                      <span className="inline-flex size-9 items-center justify-center rounded-full border border-border/50 bg-muted">
-                        <Icon className="size-4 text-accent" />
-                      </span>
+    <section className="border-t border-border py-20 sm:py-28 lg:py-32">
+      <Container className="grid gap-12 lg:grid-cols-[0.75fr_1.25fr] lg:gap-20">
+        <div className="lg:pr-10">
+          <SectionHeader
+            eyebrow={home.practicePreview.eyebrow}
+            title={home.practicePreview.title}
+            description={home.practicePreview.description}
+          />
+        </div>
+        <div>
+          <ol className="border-t border-border">
+            {practiceAreas.slice(0, 5).map((area, index) => (
+              <li key={area.slug} className="border-b border-border">
+                <Link
+                  href={`/practice-areas/#${area.slug}`}
+                  className="group grid grid-cols-[2.5rem_minmax(0,1fr)] gap-x-4 gap-y-2 py-6 text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent sm:grid-cols-[2.5rem_minmax(0,1fr)_auto] sm:py-8"
+                >
+                  <span className="font-serif text-xl text-accent" aria-hidden="true">
+                    {String(index + 1).padStart(2, "0")}
+                  </span>
+                  <span>
+                    <span className="block font-serif text-2xl leading-tight transition-colors group-hover:text-accent sm:text-3xl">
                       {area.title}
-                    </h3>
-                    <CardContent className="space-y-4">
-                      <p className="text-sm text-muted-foreground">
-                        {area.shortDescription}
-                      </p>
-                      <ul className="space-y-2 text-sm text-foreground/80">
-                        {area.bullets.slice(0, 2).map((bullet) => (
-                          <li key={bullet} className="flex items-start gap-2">
-                            <span className="mt-1 size-1.5 rounded-full bg-accent" />
-                            <span>{bullet}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </CardContent>
-                  </Card>
-                )
-              })}
-            </div>
-            <Button asChild variant="outline" className="h-12 w-full sm:w-auto">
-              <Link href={home.practicePreview.ctaHref}>
-                {home.practicePreview.ctaLabel}
-              </Link>
-            </Button>
-          </div>
-          <div className="hidden lg:block">
-            <div className="relative aspect-video overflow-hidden rounded-3xl border border-border/50">
-              <Image
-                src={home.practicePreview.image.src}
-                alt={home.practicePreview.image.alt}
-                fill
-                className="object-cover"
-                sizes="(min-width: 1024px) 32vw, 90vw"
-              />
-            </div>
-          </div>
+                    </span>
+                    <span className="mt-2 block max-w-xl text-sm leading-relaxed text-muted-foreground">
+                      {area.shortDescription}
+                    </span>
+                  </span>
+                  <span className="hidden text-xl text-accent transition-transform group-hover:translate-x-1 sm:block" aria-hidden="true">↗</span>
+                </Link>
+              </li>
+            ))}
+          </ol>
+          <Link
+            href={home.practicePreview.ctaHref}
+            className="mt-8 inline-flex items-center gap-4 border-b border-accent pb-2 text-sm font-semibold text-foreground transition-colors hover:text-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+          >
+            {home.practicePreview.ctaLabel}<span aria-hidden="true">↗</span>
+          </Link>
         </div>
       </Container>
     </section>
