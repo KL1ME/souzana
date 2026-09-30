@@ -1,6 +1,5 @@
-import Link from "next/link"
 import Container from "@/components/layout/Container"
-import { pages, practiceAreas, site } from "@/lib/content"
+import { pages, practiceAreas } from "@/lib/content"
 import { createPageMetadata } from "@/lib/metadata"
 
 export const metadata = createPageMetadata(
@@ -101,28 +100,6 @@ export default function PracticeAreasPage() {
               </div>
             </article>
           ))}
-        </Container>
-      </section>
-
-      <section className="py-16 sm:py-24">
-        <Container className="grid gap-8 lg:grid-cols-[12rem_minmax(0,1fr)] lg:gap-12">
-          <p className="text-xs font-medium uppercase tracking-[0.25em] text-muted-foreground">
-            {site.city}
-          </p>
-          <div className="max-w-3xl">
-            <h2 className="font-serif text-3xl text-foreground sm:text-4xl">
-              {pages.practice.ctaTitle}
-            </h2>
-            <p className="mt-4 text-base leading-relaxed text-muted-foreground">
-              {pages.practice.ctaDescription}
-            </p>
-            <Link
-              href={pages.practice.ctaHref}
-              className="mt-8 inline-flex items-center gap-4 border-b border-accent pb-2 text-sm font-semibold text-foreground transition-colors hover:text-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
-            >
-              {pages.practice.ctaLabel}<span aria-hidden="true">↗</span>
-            </Link>
-          </div>
         </Container>
       </section>
     </div>

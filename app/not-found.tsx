@@ -15,16 +15,11 @@ export default function NotFound() {
           </h1>
           <p className="text-base text-muted-foreground max-w-xl">
             Το περιεχόμενο που αναζητάτε δεν είναι διαθέσιμο. Επιστρέψτε στην
-            αρχική σελίδα ή επικοινωνήστε μαζί μας για βοήθεια.
+            αρχική σελίδα.
           </p>
-          <div className="flex flex-wrap gap-4">
-            <Button asChild size="lg">
-              <Link href="/">Επιστροφή στην αρχική</Link>
-            </Button>
-            <Button asChild variant="outline" size="lg">
-              <Link href="/contact">Επικοινωνία</Link>
-            </Button>
-          </div>
+          <Button asChild size="lg">
+            <Link href="/">Επιστροφή στην αρχική</Link>
+          </Button>
         </Container>
       </section>
     </div>

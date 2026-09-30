@@ -61,14 +61,6 @@ export default function RootLayout({
     name: site.name,
     url: site.url,
     areaServed: ["Καλαμάτα, Ελλάδα", "Αθήνα, Ελλάδα"],
-    address: site.contact.offices.map((office) => ({
-      "@type": "PostalAddress",
-      streetAddress: office.streetAddress,
-      addressLocality: office.city,
-      addressCountry: "GR",
-    })),
-    ...(site.contact.phone ? { telephone: site.contact.phone } : {}),
-    email: site.contact.email,
   }
 
   return (

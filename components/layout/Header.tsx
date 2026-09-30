@@ -79,7 +79,7 @@ export default function Header() {
                 Πλοήγηση
               </SheetTitle>
               <SheetDescription className="sr-only">
-                Επιλέξτε σελίδα ή μεταβείτε στην επικοινωνία.
+                Επιλέξτε σελίδα.
               </SheetDescription>
             </SheetHeader>
             <div className="flex flex-col gap-4 px-6 py-6">

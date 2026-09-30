@@ -1,6 +1,6 @@
 # Souzana Klimentidi Law Office Website
 
-Professional website for Klimentidi – Tsilivaraki & Associates, a law firm with its central office in Kalamata and a branch in Athens. The project presents practice areas, team profiles, legal insights, media appearances, privacy information, and a contact flow in a polished Greek-language experience.
+Professional website for Klimentidi – Tsilivaraki & Associates, a law firm based in Kalamata and Athens. The project presents practice areas, team profiles, legal insights, and media appearances in a Greek-language experience.
 
 ## Live site
 
@@ -16,17 +16,16 @@ Professional website for Klimentidi – Tsilivaraki & Associates, a law firm wit
 
 ## Content areas
 
-- Home page with hero, practice preview, team introduction, and call-to-action sections
+- Home page with hero, practice preview, and team introduction
 - Practice areas
 - Team
 - Insights with individual article pages
 - Media appearances
-- Contact and privacy pages
 
 ## Project structure
 
 - `app/`: routes, metadata, and page composition
-- `components/`: layout, sections, forms, and UI primitives
+- `components/`: layout, sections, and UI primitives
 - `lib/content.ts`: centralized site copy and structured content
 - `public/`: images and static assets
 

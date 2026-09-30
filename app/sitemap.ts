@@ -11,8 +11,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
     "/team",
     "/insights",
     "/media",
-    "/contact",
-    "/privacy",
   ]
   const postRoutes = posts.map((post) => `/insights/${post.slug}`)
 

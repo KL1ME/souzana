@@ -5,7 +5,7 @@ import { site } from "@/lib/content"
 export default function Footer() {
   return (
     <footer className="border-t border-accent/30 bg-background">
-      <Container className="grid gap-10 py-12 sm:py-16 md:grid-cols-[1.1fr_1fr_1fr]">
+      <Container className="grid gap-10 py-12 sm:py-16 md:grid-cols-[1.1fr_1fr]">
         <div className="space-y-4">
           <div className="space-y-1">
             <p className="font-serif text-xl font-semibold leading-tight tracking-[0.025em] sm:text-2xl">
@@ -17,34 +17,6 @@ export default function Footer() {
             </p>
           </div>
           <p className="text-sm text-muted-foreground">{site.seo.description}</p>
-        </div>
-        <div className="flex flex-col items-start gap-3 text-sm">
-          <p className="font-semibold text-foreground">Επικοινωνία</p>
-          <div className="space-y-3">
-            {site.contact.offices.map((office) => (
-              <div key={office.label}>
-                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-foreground">
-                  {office.label}
-                </p>
-                <p className="mt-1 text-muted-foreground">{office.address}</p>
-              </div>
-            ))}
-          </div>
-          <p className="text-muted-foreground">{site.contact.hours}</p>
-          {site.contact.phone ? (
-            <a
-              href={`tel:${site.contact.phone.replace(/\s/g, "")}`}
-              className="text-muted-foreground transition-colors hover:text-foreground"
-            >
-              {site.contact.phone}
-            </a>
-          ) : null}
-          <a
-            href={`mailto:${site.contact.email}`}
-            className="break-all text-muted-foreground transition-colors hover:text-foreground sm:break-normal"
-          >
-            {site.contact.email}
-          </a>
         </div>
         <div className="space-y-3 text-sm">
           <p className="font-semibold text-foreground">Σύνδεσμοι</p>
@@ -58,9 +30,6 @@ export default function Footer() {
                 {item.label}
               </Link>
             ))}
-            <Link href="/privacy" className="transition-colors hover:text-foreground">
-              Πολιτική Απορρήτου
-            </Link>
           </div>
           <div className="mt-6 space-y-2 text-xs text-muted-foreground">
             {site.legal.footer.map((line) => (
