@@ -5,7 +5,7 @@ import { home } from "@/lib/content"
 
 export default function IntroNote() {
   return (
-    <section className="py-20 sm:py-28 lg:py-32">
+    <section id="company" className="scroll-mt-24 py-20 sm:scroll-mt-28 sm:py-28 lg:py-32">
       <Container className="grid gap-12 lg:grid-cols-[0.75fr_1.25fr] lg:gap-20">
         <SectionHeader eyebrow={home.intro.eyebrow} title={home.intro.title} />
         <div className="max-w-3xl">
