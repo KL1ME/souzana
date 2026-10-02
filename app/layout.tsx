@@ -4,6 +4,7 @@ import { site } from "@/lib/content"
 import "./globals.css"
 import Header from "@/components/layout/Header"
 import Footer from "@/components/layout/Footer"
+import ThemisChat from "@/components/themis/ThemisChat"
 
 const inter = Inter({
   variable: "--font-inter",
@@ -76,6 +77,7 @@ export default function RootLayout({
           {children}
         </main>
         <Footer />
+        <ThemisChat />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{

@@ -5,6 +5,7 @@ const repo = "souzana"
 const basePath = isGhPages ? `/${repo}` : ""
 
 const nextConfig = {
+  devIndicators: false,
   output: "export",
   trailingSlash: true,
   basePath,
