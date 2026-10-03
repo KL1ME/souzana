@@ -85,6 +85,20 @@ export const site = {
     secondary: "και Συνεργάτες",
     subtitle: "Δικηγορική Εταιρεία",
   },
+  footer: {
+    name: "Σουζάνα Ι. Κλημεντίδη",
+    firmName: "Σουζάνα Ι. Κλημεντίδη – Δέσποινα Δ. Τσιλιβαράκη-Κλημεντίδη",
+    firmType: "και Συνεργάτες Δικηγορική Εταιρεία",
+    phones: [
+      { label: "+30 211 7500016", href: "tel:+302117500016" },
+      { label: "+30 211 7500017", href: "tel:+302117500017" },
+    ],
+    address: {
+      label: "Μέρλιν 3, 106 71 Αθήνα, Ελλάδα",
+      href: "https://www.google.com/maps/search/%CE%9C%CE%AD%CF%81%CE%BB%CE%B9%CE%BD+3,+106+71+%CE%91%CE%B8%CE%AE%CE%BD%CE%B1,+%CE%95%CE%BB%CE%BB%CE%AC%CE%B4%CE%B1?entry=gmail&source=g",
+    },
+    email: "lawfirm@klimentidi.gr",
+  },
   city: "Καλαμάτα • Αθήνα",
   url: "https://kl1me.github.io/souzana",
   nav: [

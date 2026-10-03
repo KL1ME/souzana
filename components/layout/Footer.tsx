@@ -5,18 +5,40 @@ import { site } from "@/lib/content"
 export default function Footer() {
   return (
     <footer className="border-t border-accent/30 bg-background">
-      <Container className="grid gap-10 py-12 sm:py-16 md:grid-cols-[1.1fr_1fr]">
-        <div className="space-y-4">
-          <div className="space-y-1">
+      <Container className="grid gap-10 py-12 sm:py-16 md:grid-cols-[1.6fr_1fr] md:gap-16">
+        <div className="space-y-6">
+          <div className="space-y-4">
             <p className="font-serif text-xl font-semibold leading-tight tracking-[0.025em] sm:text-2xl">
-              {site.wordmark.primary}
+              {site.footer.name}
             </p>
-            <p className="text-[0.58rem] uppercase tracking-[0.25em] text-muted-foreground">
-              {site.wordmark.secondary} <span aria-hidden="true">•</span>{" "}
-              {site.wordmark.subtitle}
+            <p className="text-sm font-semibold leading-relaxed text-foreground">
+              {site.footer.firmName}
+              <br />
+              {site.footer.firmType}
             </p>
           </div>
-          <p className="text-sm text-muted-foreground">{site.seo.description}</p>
+          <address className="space-y-2 text-sm not-italic leading-relaxed text-muted-foreground">
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+              {site.footer.phones.map((phone, index) => (
+                <span key={phone.href} className="inline-flex items-center gap-2">
+                  {index > 0 && <span aria-hidden="true">|</span>}
+                  <a href={phone.href} className="whitespace-nowrap transition-colors hover:text-foreground">
+                    {phone.label}
+                  </a>
+                </span>
+              ))}
+            </div>
+            <p>
+              <a href={site.footer.address.href} className="underline decoration-accent/50 underline-offset-4 transition-colors hover:text-foreground">
+                {site.footer.address.label}
+              </a>
+            </p>
+            <p>
+              <a href={`mailto:${site.footer.email}`} className="underline decoration-accent/50 underline-offset-4 transition-colors hover:text-foreground">
+                {site.footer.email}
+              </a>
+            </p>
+          </address>
         </div>
         <div className="space-y-3 text-sm">
           <p className="font-semibold text-foreground">Σύνδεσμοι</p>
