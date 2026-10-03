@@ -157,6 +157,8 @@ Install dependencies, then copy `.env.example` to `.env.local` and `.env.themis.
 
 `THEMIS_WEB_SEARCH_ENABLED=false` disables web searches. `THEMIS_WEB_ALLOWED_DOMAINS` is a comma-separated list of allowed domain names, without schemes or paths. `THEMIS_ALLOW_GENERAL_FALLBACK=true` enables the labelled model-knowledge fallback. These settings live in the backend environment.
 
+Greetings, thanks, and simple questions about THEMIS receive direct conversational replies without a database search or OpenAI request. This works even when general model-knowledge fallback is disabled. A message combining a greeting with a factual or legal question continues through database retrieval and sourced web search.
+
 Start the real API and the website together:
 
 ```bash

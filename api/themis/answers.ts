@@ -2,6 +2,7 @@ import type { ThemisAnswer, ThemisCitation, ThemisMessage, ThemisSource } from "
 import { queryTerms, type KnowledgeSearch } from "./knowledge"
 import { themisInstructions } from "./prompt"
 import { clockAnswer } from "./clock"
+import { conversationAnswer } from "./conversation"
 
 export type AnswerConfig = {
   apiKey: string
@@ -70,6 +71,8 @@ function databaseAnswer(answer: string, sources: ThemisSource[]): ThemisAnswer {
 
 export async function answerQuestion(messages: ThemisMessage[], config: AnswerConfig, fetchImpl: typeof fetch, signal: AbortSignal): Promise<ThemisAnswer> {
   const question = messages.at(-1)!.content
+  const conversation = conversationAnswer(question)
+  if (conversation) return conversation
   const previousQuestion = messages.slice(0, -1).reverse().find((message) => message.role === "user")?.content ?? ""
   const searchQuestion = queryTerms(question).length <= 1 ? `${question}\n${previousQuestion}` : question
   let excerpts
