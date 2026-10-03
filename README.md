@@ -194,7 +194,7 @@ This free configuration is for the initial test using website knowledge only. [R
 
 The API applies body/history limits, a 60-second total answer timeout, four concurrent requests, and 12 requests per minute per socket address. It does not trust forwarded IP headers. Behind a proxy, enforce visitor rate limits and spend controls at the trusted gateway; the built-in limit will otherwise apply to the proxy address. Origin checks are browser CORS protection, not authentication, and cannot prevent scripted callers from forging an Origin header.
 
-The application does not write transcripts to disk or browser storage. The panel holds the conversation in page memory until a new chat or reload; each request sends at most the last nine exchanges and the current question, within a character budget. OpenAI requests use `store: false` to disable response storage; this does not establish zero provider retention ([OpenAI data controls](https://developers.openai.com/api/docs/guides/your-data)).
+The application does not write transcripts to disk or browser storage. The panel holds the conversation in page memory until a new chat or reload. Sources on this website use internal navigation and close the panel so the visitor can read the source; reopening THEMIS on that page restores the same conversation. External sources open in another tab while the original conversation remains in its tab. Each request sends at most the last nine exchanges and the current question, within a character budget. OpenAI requests use `store: false` to disable response storage; this does not establish zero provider retention ([OpenAI data controls](https://developers.openai.com/api/docs/guides/your-data)).
 
 ### Verification
 

@@ -1,16 +1,19 @@
 "use client"
 
 import * as Dialog from "@radix-ui/react-dialog"
+import Link from "next/link"
 import { ArrowUp, LoaderCircle, RotateCcw, X } from "lucide-react"
 import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from "react"
 import { cn } from "@/lib/utils"
 import { themis, THEMIS_MAX_CONVERSATION_LENGTH, THEMIS_MAX_HISTORY, THEMIS_MAX_MESSAGE_LENGTH, type ThemisMessage } from "@/lib/themis"
 import { requestThemisAnswer } from "@/lib/themis-client"
+import { internalThemisSourceHref } from "@/lib/themis-links"
+import { site } from "@/lib/content"
 
 const endpoint = process.env.NEXT_PUBLIC_THEMIS_API_URL?.trim()
 const preview = process.env.NODE_ENV === "development" && process.env.NEXT_PUBLIC_THEMIS_PREVIEW === "true"
 
-function replyContent(message: ThemisMessage) {
+function replyContent(message: ThemisMessage, openInternalSource: () => void) {
   const parts = []
   let position = 0
   for (const citation of message.citations ?? []) {
@@ -18,9 +21,16 @@ function replyContent(message: ThemisMessage) {
     if (!source) continue
     const text = message.content.slice(citation.start, citation.end)
     const label = /^\s*(?:\[\d+\]|cite[^]*)\s*$/.test(text) ? `[${citation.sourceIndex + 1}]` : text
+    const internalHref = internalThemisSourceHref(source.url, site.url)
+    const props = {
+      title: source.title,
+      "aria-label": `Πηγή: ${source.title}`,
+      className: "rounded-sm underline underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent",
+    }
     parts.push(message.content.slice(position, citation.start))
-    parts.push(<a key={`${citation.start}:${source.id}`} href={source.url} target="_blank" rel="noreferrer" title={source.title}
-      aria-label={`Πηγή: ${source.title}`} className="rounded-sm underline underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent">{label}</a>)
+    parts.push(internalHref
+      ? <Link key={`${citation.start}:${source.id}`} href={internalHref} onClick={openInternalSource} {...props}>{label}</Link>
+      : <a key={`${citation.start}:${source.id}`} href={source.url} target="_blank" rel="noopener noreferrer" {...props}>{label}</a>)
     position = citation.end
   }
   parts.push(message.content.slice(position))
@@ -144,7 +154,7 @@ export default function ThemisChat() {
                 <div key={index} className={cn("flex flex-col gap-1.5", message.role === "user" ? "items-end" : "items-start")}>
                   <span className="px-1 text-[10px] font-medium tracking-wide">{message.role === "user" ? "Εσείς" : "THEMIS"}</span>
                   <p className={cn("max-w-[92%] rounded-xl border border-accent/30 bg-white px-4 py-3 text-sm leading-relaxed whitespace-pre-wrap break-words [overflow-wrap:anywhere]",
-                    message.role === "user" ? "rounded-br-sm" : "rounded-bl-sm")}>{replyContent(message)}</p>
+                    message.role === "user" ? "rounded-br-sm" : "rounded-bl-sm")}>{replyContent(message, () => setOpen(false))}</p>
                 </div>
               ))}
             </div>
