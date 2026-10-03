@@ -142,19 +142,7 @@ Before production activation, evaluate Greek paraphrases, exact source support, 
 
 ### Build and review without an API key
 
-For **live private testing with your ChatGPT/Codex subscription**, install/sign in to the Codex CLI with `codex login`, then run:
-
-```bash
-npm run themis:codex
-```
-
-Open `http://localhost:3001` and click THEMIS. This uses your existing ChatGPT login through the [local Codex CLI](https://learn.chatgpt.com/docs/non-interactive-mode), checks that login is subscription-based before each answer, and counts toward your plan usage. No credential is copied into the website, and no API key is needed. `THEMIS_CODEX_COMMAND` can point to your installed Codex executable if it is not on PATH.
-
-This preview binds both services to `127.0.0.1`, accepts only local preview origins, and permits one generation at a time. Each request uses a temporary workspace, a read-only sandbox, disabled shell/apps/plugins/hooks/memory tools, structured output, a sanitized child environment, and a bounded timeout. The adapter uses `gpt-5.5` with low reasoning effort because it supports native web search without the Code Mode host. Database and general responses have web tools disabled; the web stage enables [live Codex search](https://learn.chatgpt.com/docs/web-search). Codex owns authentication and token refresh. Temporary prompt/schema files are removed after each request; chat history is held in the browser's memory. The adapter requests ephemeral Codex sessions; this does not change OpenAI's account/provider data policies.
-
-Firm questions use the approved website database and clickable sources. When the database cannot support an answer, the local preview searches the public web, with instructions to use primary sources and official authorities for legal information. A cited web answer requires a completed search and the exact URLs of pages Codex opened; invented or unopened source URLs are omitted from the links shown. If no supporting source is available, the local test enables a clearly labelled general-information response. With general fallback enabled, simple Greek/English current-time and date questions use the server clock directly after retrieval, without a model or web request; these answers identify Greece time (`Europe/Athens`). Each generated answer also receives a fresh clock snapshot, with Greece's local date and daylight-saving adjustment. Drive is not connected. The production API remains API-key based with its configured official-domain restrictions and stricter fallback; neither the subscription adapter nor this local preview is a public hosting service. Run real API/Drive acceptance tests before switching the published website to that backend.
-
-The original sample-only preview remains available:
+A sample-only local preview is available for checking the interface:
 
 ```bash
 npm install
@@ -165,18 +153,26 @@ Open `http://localhost:3001`. This starts a local website and sample-response se
 
 ### Local connection when ready
 
-Install dependencies, then copy `.env.example` to `.env.local` and `.env.themis.example` to `.env.themis`. Set `OPENAI_API_KEY` and `OPENAI_MODEL` in `.env.themis` using a Responses API model that supports structured outputs and web search and is enabled for your OpenAI project. Keep the private key in the backend environment, never in a `NEXT_PUBLIC_` variable. Model compatibility requires a live check when credentials are available.
+Install dependencies, then copy `.env.example` to `.env.local` and `.env.themis.example` to `.env.themis`. Add your key after `OPENAI_API_KEY=` in `.env.themis`; keep this file private, with permissions `0600`. The default model is [`gpt-5.4-mini`](https://developers.openai.com/api/docs/models/gpt-5.4-mini), which supports Responses, structured outputs and web search. You can change `OPENAI_MODEL` to another compatible model enabled for your OpenAI project. Keep the private key in the backend environment, never in a `NEXT_PUBLIC_` variable. Model access and live answers require a check when credentials are available.
 
 `THEMIS_WEB_SEARCH_ENABLED=false` disables web searches. `THEMIS_WEB_ALLOWED_DOMAINS` is a comma-separated list of allowed domain names, without schemes or paths. `THEMIS_ALLOW_GENERAL_FALLBACK=true` enables the labelled model-knowledge fallback. These settings live in the backend environment.
 
-Run these in separate terminals:
+Start the real API and the website together:
+
+```bash
+npm run themis:dev
+```
+
+Open `http://localhost:3000`. Saving `.env.themis` automatically restarts the API with the new configuration. The private file is loaded only by the API, and the website uses the public endpoint at `http://127.0.0.1:8787/api/themis`. The local services bind to loopback. While the key is missing, chat returns a controlled setup message and preserves the draft; it does not generate sample answers.
+
+Alternatively, run these in separate terminals:
 
 ```bash
 npm run themis:api
 npm run dev
 ```
 
-Open `http://localhost:3000`. `NEXT_PUBLIC_THEMIS_API_URL` defaults to the example service at `http://localhost:8787/api/themis` only when you copy the example environment file. Without an endpoint, the panel shows a coming-soon message. Without a backend key or model, requests receive `503 not_configured`.
+`NEXT_PUBLIC_THEMIS_API_URL` is set only when you copy the example environment file. Without an endpoint, the panel shows a coming-soon message. Without a backend key, requests receive `503 not_configured`.
 
 ### Hosting alongside GitHub Pages
 

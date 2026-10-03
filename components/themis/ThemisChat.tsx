@@ -4,11 +4,11 @@ import * as Dialog from "@radix-ui/react-dialog"
 import { ArrowUp, LoaderCircle, RotateCcw, X } from "lucide-react"
 import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from "react"
 import { cn } from "@/lib/utils"
-import { parseThemisAnswer, themis, THEMIS_MAX_CONVERSATION_LENGTH, THEMIS_MAX_HISTORY, THEMIS_MAX_MESSAGE_LENGTH, type ThemisMessage } from "@/lib/themis"
+import { themis, THEMIS_MAX_CONVERSATION_LENGTH, THEMIS_MAX_HISTORY, THEMIS_MAX_MESSAGE_LENGTH, type ThemisMessage } from "@/lib/themis"
+import { requestThemisAnswer } from "@/lib/themis-client"
 
 const endpoint = process.env.NEXT_PUBLIC_THEMIS_API_URL?.trim()
 const preview = process.env.NODE_ENV === "development" && process.env.NEXT_PUBLIC_THEMIS_PREVIEW === "true"
-const codexPreview = process.env.NODE_ENV === "development" && process.env.NEXT_PUBLIC_THEMIS_PREVIEW === "codex"
 
 function replyContent(message: ThemisMessage) {
   const parts = []
@@ -64,20 +64,7 @@ export default function ThemisChat() {
     setSending(true)
 
     try {
-      const response = await fetch(endpoint, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: history }),
-        credentials: "omit",
-        signal: AbortSignal.any([controller.signal, AbortSignal.timeout(75_000)]),
-      })
-      if (!response.ok) {
-        throw new Error(response.status === 429 ? "busy" : response.status === 504 ? "timeout" : "unavailable")
-      }
-      const result = parseThemisAnswer(await response.json())
-      if (!result) {
-        throw new Error("unavailable")
-      }
+      const result = await requestThemisAnswer(endpoint, history, controller.signal)
       setMessages([...messages, { role: "user", content: text }, { role: "assistant", content: result.reply, sources: result.sources, citations: result.citations }])
     } catch (failure) {
       if (controller.signal.aborted) return
@@ -87,6 +74,8 @@ export default function ThemisChat() {
         ? "Η THEMIS δέχεται αρκετά μηνύματα αυτή τη στιγμή. Δοκιμάστε ξανά σε λίγο."
         : failure instanceof Error && (failure.message === "timeout" || failure.name === "TimeoutError")
           ? "Η απάντηση άργησε περισσότερο από το αναμενόμενο. Το μήνυμά σας παραμένει εδώ για να δοκιμάσετε ξανά."
+        : failure instanceof Error && failure.message === "not_configured"
+          ? "Η THEMIS δεν έχει ενεργοποιηθεί ακόμη. Το μήνυμά σας παραμένει εδώ για να δοκιμάσετε ξανά μόλις ολοκληρωθεί η σύνδεση."
         : "Η αποστολή δεν ολοκληρώθηκε. Το μήνυμά σας παραμένει εδώ για να δοκιμάσετε ξανά.")
     } finally {
       if (requestRef.current === controller) {
@@ -137,7 +126,6 @@ export default function ThemisChat() {
               <Dialog.Title className="text-xs font-semibold tracking-[0.2em]">{themis.name}</Dialog.Title>
               <Dialog.Description className="sr-only">{themis.subtitle}</Dialog.Description>
               {preview && <p className="mt-1 text-[10px]">Ενδεικτική προεπισκόπηση</p>}
-              {codexPreview && <p className="mt-1 text-[10px]">Τοπική δοκιμή · Codex</p>}
             </div>
             <button type="button" onClick={reset} disabled={sending || !messages.length}
               className="flex size-11 items-center justify-center rounded-lg transition-colors hover:bg-accent/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent disabled:opacity-30"

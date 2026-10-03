@@ -46,7 +46,7 @@ async function main() {
       knowledge = new CombinedKnowledge(local, new ManagedDriveKnowledge({ catalogue,
         index: new OpenAIKnowledgeIndex({ apiKey, vectorStoreId }), vectorStoreId, maxAgeMs: Math.round(hours * 60 * 60 * 1000) }))
     }
-    const server = createThemisServer({ apiKey, model: process.env.OPENAI_MODEL?.trim() ?? "", allowedOrigins,
+    const server = createThemisServer({ apiKey, model: process.env.OPENAI_MODEL?.trim() || "gpt-5.4-mini", allowedOrigins,
       knowledge, webSearchEnabled, webAllowedDomains, allowGeneralFallback })
     server.once("close", () => local.close())
     server.once("error", () => { local.close(); console.error("THEMIS API could not listen on its configured address."); process.exitCode = 1 })
