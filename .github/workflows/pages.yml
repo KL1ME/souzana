@@ -31,7 +31,7 @@ jobs:
         run: npm run test:themis
       - name: Build
         env:
-          NEXT_PUBLIC_THEMIS_API_URL: ${{ vars.THEMIS_API_URL }}
+          NEXT_PUBLIC_THEMIS_API_URL: ${{ vars.THEMIS_API_URL || 'https://themis-api-test.onrender.com/api/themis' }}
         run: GITHUB_PAGES=true npm run build
       - name: Disable Jekyll
         run: touch out/.nojekyll
