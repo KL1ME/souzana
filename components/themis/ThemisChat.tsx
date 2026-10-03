@@ -4,10 +4,28 @@ import * as Dialog from "@radix-ui/react-dialog"
 import { ArrowUp, LoaderCircle, RotateCcw, X } from "lucide-react"
 import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from "react"
 import { cn } from "@/lib/utils"
-import { themis, THEMIS_MAX_CONVERSATION_LENGTH, THEMIS_MAX_HISTORY, THEMIS_MAX_MESSAGE_LENGTH, type ThemisMessage } from "@/lib/themis"
+import { parseThemisAnswer, themis, THEMIS_MAX_CONVERSATION_LENGTH, THEMIS_MAX_HISTORY, THEMIS_MAX_MESSAGE_LENGTH, type ThemisMessage } from "@/lib/themis"
 
 const endpoint = process.env.NEXT_PUBLIC_THEMIS_API_URL?.trim()
 const preview = process.env.NODE_ENV === "development" && process.env.NEXT_PUBLIC_THEMIS_PREVIEW === "true"
+const codexPreview = process.env.NODE_ENV === "development" && process.env.NEXT_PUBLIC_THEMIS_PREVIEW === "codex"
+
+function replyContent(message: ThemisMessage) {
+  const parts = []
+  let position = 0
+  for (const citation of message.citations ?? []) {
+    const source = message.sources?.[citation.sourceIndex]
+    if (!source) continue
+    const text = message.content.slice(citation.start, citation.end)
+    const label = /^\s*(?:\[\d+\]|cite[^]*)\s*$/.test(text) ? `[${citation.sourceIndex + 1}]` : text
+    parts.push(message.content.slice(position, citation.start))
+    parts.push(<a key={`${citation.start}:${source.id}`} href={source.url} target="_blank" rel="noreferrer" title={source.title}
+      aria-label={`Πηγή: ${source.title}`} className="rounded-sm underline underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent">{label}</a>)
+    position = citation.end
+  }
+  parts.push(message.content.slice(position))
+  return parts
+}
 
 export default function ThemisChat() {
   const [open, setOpen] = useState(false)
@@ -51,25 +69,24 @@ export default function ThemisChat() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ messages: history }),
         credentials: "omit",
-        signal: AbortSignal.any([controller.signal, AbortSignal.timeout(45_000)]),
+        signal: AbortSignal.any([controller.signal, AbortSignal.timeout(75_000)]),
       })
       if (!response.ok) {
-        throw new Error(response.status === 429 ? "busy" : "unavailable")
+        throw new Error(response.status === 429 ? "busy" : response.status === 504 ? "timeout" : "unavailable")
       }
-      const result: unknown = await response.json()
-      if (
-        !result || typeof result !== "object" || !("reply" in result) ||
-        typeof result.reply !== "string" || !result.reply.trim() || result.reply.length > 6000
-      ) {
+      const result = parseThemisAnswer(await response.json())
+      if (!result) {
         throw new Error("unavailable")
       }
-      setMessages([...messages, { role: "user", content: text }, { role: "assistant", content: result.reply.trim() }])
+      setMessages([...messages, { role: "user", content: text }, { role: "assistant", content: result.reply, sources: result.sources, citations: result.citations }])
     } catch (failure) {
       if (controller.signal.aborted) return
       setMessages(messages)
       setDraft(text)
       setError(failure instanceof Error && failure.message === "busy"
         ? "Η THEMIS δέχεται αρκετά μηνύματα αυτή τη στιγμή. Δοκιμάστε ξανά σε λίγο."
+        : failure instanceof Error && (failure.message === "timeout" || failure.name === "TimeoutError")
+          ? "Η απάντηση άργησε περισσότερο από το αναμενόμενο. Το μήνυμά σας παραμένει εδώ για να δοκιμάσετε ξανά."
         : "Η αποστολή δεν ολοκληρώθηκε. Το μήνυμά σας παραμένει εδώ για να δοκιμάσετε ξανά.")
     } finally {
       if (requestRef.current === controller) {
@@ -103,7 +120,7 @@ export default function ThemisChat() {
       <Dialog.Trigger asChild>
         <button
           type="button"
-          className="fixed right-4 bottom-5 z-40 flex min-h-12 items-center justify-center rounded-xl border border-accent bg-white px-6 py-3 text-xs font-semibold tracking-[0.2em] text-[#806321] shadow-sm transition-colors hover:bg-accent/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-4 sm:right-7 sm:bottom-7"
+          className="fixed right-4 bottom-5 z-40 flex min-h-12 items-center justify-center rounded-xl border border-accent bg-white px-6 py-3 text-xs font-semibold tracking-[0.2em] text-black shadow-sm transition-colors hover:bg-accent/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-4 sm:right-7 sm:bottom-7"
           aria-label="Συνομιλήστε με τη THEMIS"
         >
           THEMIS
@@ -112,7 +129,7 @@ export default function ThemisChat() {
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-50 bg-white/60 data-[state=open]:animate-in data-[state=open]:fade-in-0" />
         <Dialog.Content
-          className="fixed inset-x-3 bottom-3 z-50 flex h-[min(560px,calc(100dvh-24px))] flex-col overflow-hidden rounded-xl border border-accent bg-white text-[#806321] shadow-sm outline-none data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:slide-in-from-bottom-3 sm:inset-x-auto sm:right-7 sm:bottom-7 sm:w-[420px]"
+          className="fixed inset-x-3 bottom-3 z-50 flex h-[min(560px,calc(100dvh-24px))] flex-col overflow-hidden rounded-xl border border-accent bg-white text-black shadow-sm outline-none data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:slide-in-from-bottom-3 sm:inset-x-auto sm:right-7 sm:bottom-7 sm:w-[420px]"
           onOpenAutoFocus={endpoint ? (event) => { event.preventDefault(); inputRef.current?.focus() } : undefined}
         >
           <div className="flex shrink-0 items-center gap-2 border-b border-accent/30 px-5 py-3">
@@ -120,14 +137,15 @@ export default function ThemisChat() {
               <Dialog.Title className="text-xs font-semibold tracking-[0.2em]">{themis.name}</Dialog.Title>
               <Dialog.Description className="sr-only">{themis.subtitle}</Dialog.Description>
               {preview && <p className="mt-1 text-[10px]">Ενδεικτική προεπισκόπηση</p>}
+              {codexPreview && <p className="mt-1 text-[10px]">Τοπική δοκιμή · Codex</p>}
             </div>
             <button type="button" onClick={reset} disabled={sending || !messages.length}
               className="flex size-11 items-center justify-center rounded-lg transition-colors hover:bg-accent/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent disabled:opacity-30"
               aria-label="Νέα συνομιλία">
-              <RotateCcw className="size-4" aria-hidden="true" />
+              <RotateCcw className="size-4 text-[#806321]" aria-hidden="true" />
             </button>
             <Dialog.Close className="flex size-11 items-center justify-center rounded-lg transition-colors hover:bg-accent/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent" aria-label="Κλείσιμο THEMIS">
-              <X className="size-5" aria-hidden="true" />
+              <X className="size-5 text-[#806321]" aria-hidden="true" />
             </Dialog.Close>
           </div>
 
@@ -138,11 +156,11 @@ export default function ThemisChat() {
                 <div key={index} className={cn("flex flex-col gap-1.5", message.role === "user" ? "items-end" : "items-start")}>
                   <span className="px-1 text-[10px] font-medium tracking-wide">{message.role === "user" ? "Εσείς" : "THEMIS"}</span>
                   <p className={cn("max-w-[92%] rounded-xl border border-accent/30 bg-white px-4 py-3 text-sm leading-relaxed whitespace-pre-wrap break-words [overflow-wrap:anywhere]",
-                    message.role === "user" ? "rounded-br-sm" : "rounded-bl-sm")}>{message.content}</p>
+                    message.role === "user" ? "rounded-br-sm" : "rounded-bl-sm")}>{replyContent(message)}</p>
                 </div>
               ))}
             </div>
-            {sending && <p role="status" className="mt-4 flex items-center gap-2 text-xs"><LoaderCircle className="size-4 animate-spin" aria-hidden="true" />Η THEMIS ετοιμάζει την απάντησή σας…</p>}
+            {sending && <p role="status" className="mt-4 flex items-center gap-2 text-xs"><LoaderCircle className="size-4 animate-spin text-[#806321]" aria-hidden="true" />Η THEMIS ετοιμάζει την απάντησή σας…</p>}
             {error && <p role="alert" className="mt-4 rounded-lg border border-accent/30 bg-white p-3 text-xs leading-relaxed">{error}</p>}
           </div>
 
@@ -151,10 +169,10 @@ export default function ThemisChat() {
             <textarea id="themis-message" ref={inputRef} value={draft} onChange={(event) => setDraft(event.target.value)} onKeyDown={onKeyDown}
               rows={2} maxLength={THEMIS_MAX_MESSAGE_LENGTH} disabled={!endpoint || sending}
               placeholder={endpoint ? "Γράψτε το μήνυμά σας…" : "Διαθέσιμο σύντομα"}
-              className="block min-h-20 w-full resize-none rounded-lg border border-accent/40 bg-white py-3 pr-14 pl-3 text-base leading-relaxed placeholder:text-[#806321]/70 focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent disabled:opacity-60 sm:text-sm" />
+              className="block min-h-20 w-full resize-none rounded-lg border border-accent/40 bg-white py-3 pr-14 pl-3 text-base leading-relaxed text-black placeholder:text-black focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent disabled:opacity-60 sm:text-sm" />
             <button type="submit" disabled={!endpoint || !draft.trim() || sending} aria-label="Αποστολή μηνύματος"
               className="absolute right-2 bottom-2 flex size-11 items-center justify-center rounded-lg border border-accent bg-white transition-colors hover:bg-accent/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent disabled:opacity-30">
-              <ArrowUp className="size-5" aria-hidden="true" />
+              <ArrowUp className="size-5 text-[#806321]" aria-hidden="true" />
             </button>
           </form>
         </Dialog.Content>

@@ -3,6 +3,8 @@ import { once } from "node:events"
 import type { AddressInfo } from "node:net"
 import { test, type TestContext } from "node:test"
 import { createThemisServer, type ThemisConfig } from "./http"
+import { KnowledgeDatabase } from "./knowledge"
+import { websiteKnowledge } from "./seed"
 
 const origin = "https://example.test"
 const messages = [{ role: "user", content: "Ποιοι είναι οι τομείς σας;" }]
@@ -10,22 +12,25 @@ const completed = {
   status: "completed",
   output: [
     { type: "reasoning", summary: [] },
-    { type: "message", role: "assistant", content: [{ type: "output_text", text: "Η εταιρεία παρέχει νομική υποστήριξη." }] },
+    { type: "message", role: "assistant", content: [{ type: "output_text", text: JSON.stringify({ answer_found: true, answer: "Η εταιρεία παρέχει νομική υποστήριξη.", citation_ids: ["website:services"] }) }] },
   ],
 }
 
 async function fixture(t: TestContext, provider: typeof fetch, overrides: Partial<ThemisConfig> = {}) {
+  const knowledge = new KnowledgeDatabase(":memory:")
+  knowledge.importDocuments(websiteKnowledge(), true)
   const server = createThemisServer({
     apiKey: "test-secret-never-public",
     model: "fixture-model",
     allowedOrigins: [origin],
     requestsPerMinute: 100,
+    knowledge,
     ...overrides,
   }, provider)
   server.listen(0, "127.0.0.1")
   await once(server, "listening")
   t.after(() => new Promise<void>((resolve, reject) => {
-    server.close((error) => error ? reject(error) : resolve())
+    server.close((error) => { knowledge.close(); if (error) reject(error); else resolve() })
     server.closeAllConnections()
   }))
   const url = `http://127.0.0.1:${(server.address() as AddressInfo).port}/api/themis`
@@ -37,7 +42,7 @@ async function fixture(t: TestContext, provider: typeof fetch, overrides: Partia
   }
 }
 
-test("uses the private OpenAI connection, canonical firm content, and bounded history", async (t) => {
+test("uses the private OpenAI connection and retrieved approved firm content", async (t) => {
   let calls = 0
   const { post } = await fixture(t, async (url, init) => {
     calls++
@@ -49,8 +54,11 @@ test("uses the private OpenAI connection, canonical firm content, and bounded hi
     assert.deepEqual(body.input, messages)
     assert.match(body.instructions, /THEMIS/)
     assert.match(body.instructions, /Δίκαιο Ακινήτων/)
-    assert.match(body.instructions, /Σουζάνα/)
     assert.match(body.instructions, /not personalised legal advice/)
+    assert.equal(body.text.format.type, "json_schema")
+    assert.equal(body.text.format.strict, true)
+    assert.ok(body.text.format.schema.properties.citation_ids.items.enum.includes("website:services"))
+    assert.equal(body.tools, undefined)
     return Response.json(completed)
   })
   const response = await post()
@@ -58,7 +66,9 @@ test("uses the private OpenAI connection, canonical firm content, and bounded hi
   assert.equal(response.headers.get("Access-Control-Allow-Origin"), origin)
   assert.equal(response.headers.get("Cache-Control"), "no-store")
   const body = await response.text()
-  assert.equal(JSON.parse(body).reply, "Η εταιρεία παρέχει νομική υποστήριξη.")
+  assert.match(JSON.parse(body).reply, /^Η εταιρεία παρέχει νομική υποστήριξη\./)
+  assert.equal(JSON.parse(body).source, "database")
+  assert.equal(JSON.parse(body).sources[0].id, "website:services")
   assert.ok(!body.includes("test-secret"))
   assert.equal(calls, 1)
 })
@@ -79,6 +89,20 @@ test("missing backend configuration is explicit without calling the provider", a
   const response = await post()
   assert.equal(response.status, 503)
   assert.deepEqual(await response.json(), { error: "not_configured" })
+})
+
+test("a local generator works without an API key, preserves citations, and refuses remote origins", async (t) => {
+  const localOrigin = "http://localhost:3001"
+  assert.throws(() => createThemisServer({ apiKey: "", model: "", knowledge: { search: () => [] }, localOnly: true, allowedOrigins: [origin] }), /loopback/)
+  const { url, post } = await fixture(t, async () => { throw new Error("must not call OpenAI") }, {
+    apiKey: "", model: "", localOnly: true, allowedOrigins: [localOrigin], generateResponse: async () => completed.output,
+  })
+  const health = await fetch(url.replace("/api/themis", "/health"))
+  assert.deepEqual(await health.json(), { name: "THEMIS", ready: true })
+  assert.equal((await post()).status, 403)
+  const response = await post({ messages }, { Origin: localOrigin })
+  assert.equal(response.status, 200)
+  assert.equal((await response.json()).sources[0].id, "website:services")
 })
 
 test("rejects malformed JSON, injected roles, broken history, oversized messages and bodies", async (t) => {
@@ -122,12 +146,14 @@ test("upstream errors do not expose secrets or provider diagnostic content", asy
 })
 
 test("empty, incomplete, and malformed provider responses fail cleanly", async (t) => {
-  for (const body of [{}, { status: "completed", output: [] }, { ...completed, status: "incomplete" }]) {
+  for (const body of [{}, { ...completed, status: "incomplete" }]) {
     const { post } = await fixture(t, async () => Response.json(body))
     const response = await post()
     assert.equal(response.status, 502)
     assert.deepEqual(await response.json(), { error: "invalid_provider_response" })
   }
+  const { post } = await fixture(t, async () => Response.json({ status: "completed", output: [] }))
+  assert.deepEqual(await (await post()).json(), { error: "invalid_database_answer" })
 })
 
 test("upstream timeout releases capacity and returns a bounded failure", async (t) => {

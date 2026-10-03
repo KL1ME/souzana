@@ -5,6 +5,8 @@ import { createRequire } from "node:module"
 import { resolve } from "node:path"
 import { pages, practiceAreas, site, teamMembers } from "@/lib/content"
 import { createThemisServer } from "./http"
+import { KnowledgeDatabase } from "./knowledge"
+import { websiteKnowledge } from "./seed"
 
 const require = createRequire(resolve("package.json"))
 
@@ -32,9 +34,20 @@ async function main() {
     const body = JSON.parse(String(init?.body))
     const question = body.input.at(-1).content as string
     await new Promise((resolve) => setTimeout(resolve, 400))
-    return Response.json({ status: "completed", output: [{ type: "message", role: "assistant", content: [{ type: "output_text", text: sampleReply(question) }] }] })
+    if (body.text?.format?.name === "database_answer") {
+      const text = JSON.stringify({ answer_found: true, answer: sampleReply(question), citation_ids: [body.text.format.schema.properties.citation_ids.items.enum[0]] })
+      return Response.json({ status: "completed", output: [{ type: "message", role: "assistant", content: [{ type: "output_text", text }] }] })
+    }
+    const text = "Αυτό είναι παράδειγμα της εναλλακτικής αναζήτησης στο web. Δεν πραγματοποιήθηκε πραγματική αναζήτηση. [1]"
+    return Response.json({ status: "completed", output: [
+      { type: "web_search_call", status: "completed" },
+      { type: "message", role: "assistant", content: [{ type: "output_text", text, annotations: [{ type: "url_citation", url: "https://www.gov.gr/", title: "gov.gr — ενδεικτική πηγή", start_index: text.length - 3, end_index: text.length }] }] },
+    ] })
   }
-  const server = createThemisServer({ apiKey: "local-preview", model: "sample-replies", allowedOrigins: [`http://localhost:${webPort}`, `http://127.0.0.1:${webPort}`], requestsPerMinute: 120 }, provider)
+  const knowledge = new KnowledgeDatabase(":memory:")
+  knowledge.importDocuments(websiteKnowledge(), true)
+  const server = createThemisServer({ apiKey: "local-preview", model: "sample-replies", knowledge, allowedOrigins: [`http://localhost:${webPort}`, `http://127.0.0.1:${webPort}`], requestsPerMinute: 120 }, provider)
+  server.once("close", () => knowledge.close())
   server.listen(apiPort, "127.0.0.1")
   await once(server, "listening")
   const child = spawn(process.execPath, [require.resolve("next/dist/bin/next"), "dev", "--hostname", "127.0.0.1", "--port", String(webPort)], {

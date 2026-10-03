@@ -1,17 +1,16 @@
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http"
 import { THEMIS_MAX_CONVERSATION_LENGTH, THEMIS_MAX_HISTORY, THEMIS_MAX_MESSAGE_LENGTH, type ThemisMessage } from "@/lib/themis"
-import { themisInstructions } from "./prompt"
+import { answerQuestion, ProviderError, type AnswerConfig } from "./answers"
 
 const MAX_BODY_BYTES = 64 * 1024
 const MAX_REPLY_LENGTH = 6000
 
-export type ThemisConfig = {
-  apiKey: string
-  model: string
+export type ThemisConfig = AnswerConfig & {
   allowedOrigins: string[]
   requestsPerMinute?: number
   maxConcurrentRequests?: number
   timeoutMs?: number
+  localOnly?: boolean
 }
 
 class HttpError extends Error {
@@ -80,35 +79,12 @@ function respond(response: ServerResponse, status: number, body: unknown) {
   response.end(JSON.stringify(body))
 }
 
-async function generateReply(messages: ThemisMessage[], config: ThemisConfig, fetchImpl: typeof fetch, signal: AbortSignal) {
-  const response = await fetchImpl("https://api.openai.com/v1/responses", {
-    method: "POST",
-    headers: { Authorization: `Bearer ${config.apiKey}`, "Content-Type": "application/json" },
-    body: JSON.stringify({
-      model: config.model,
-      instructions: themisInstructions(),
-      input: messages,
-      max_output_tokens: 1200,
-      store: false,
-    }),
-    signal,
-  })
-  if (!response.ok) throw new HttpError(response.status === 429 ? 429 : 502, "provider_unavailable")
-  const result: unknown = await response.json()
-  if (!isRecord(result) || result.status !== "completed" || !Array.isArray(result.output)) {
-    throw new HttpError(502, "invalid_provider_response")
-  }
-  const reply = result.output.flatMap((item: unknown) => {
-    if (!isRecord(item) || item.type !== "message" || item.role !== "assistant" || !Array.isArray(item.content)) return []
-    return item.content.flatMap((content: unknown) =>
-      isRecord(content) && content.type === "output_text" && typeof content.text === "string" ? [content.text] : []
-    )
-  }).join("\n").trim()
-  if (!reply || reply.length > MAX_REPLY_LENGTH) throw new HttpError(502, "invalid_provider_response")
-  return reply
-}
-
 export function createThemisServer(config: ThemisConfig, fetchImpl: typeof fetch = fetch) {
+  if (config.localOnly && config.allowedOrigins.some((origin) => {
+    const url = new URL(origin)
+    return url.protocol !== "http:" || !["localhost", "127.0.0.1", "[::1]"].includes(url.hostname) || url.origin !== origin
+  })) throw new Error("Local THEMIS origins must be exact loopback HTTP origins.")
+  const ready = Boolean(config.generateResponse || (config.apiKey && config.model))
   const origins = new Set(config.allowedOrigins)
   const clients = new Map<string, { count: number; expires: number }>()
   const perMinute = config.requestsPerMinute ?? 12
@@ -119,10 +95,14 @@ export function createThemisServer(config: ThemisConfig, fetchImpl: typeof fetch
     response.setHeader("Cache-Control", "no-store")
     response.setHeader("X-Content-Type-Options", "nosniff")
     response.setHeader("Vary", "Origin")
+    if (config.localOnly && !["127.0.0.1", "::1", "::ffff:127.0.0.1"].includes(request.socket.remoteAddress ?? "")) {
+      respond(response, 403, { error: "local_only" })
+      return
+    }
 
     const path = request.url?.split("?")[0]
     if (path === "/health" && request.method === "GET") {
-      respond(response, 200, { name: "THEMIS", ready: Boolean(config.apiKey && config.model) })
+      respond(response, 200, { name: "THEMIS", ready })
       return
     }
     if (path !== "/api/themis") {
@@ -161,7 +141,7 @@ export function createThemisServer(config: ThemisConfig, fetchImpl: typeof fetch
     }
     client.count++
     clients.set(address, client)
-    if (!config.apiKey || !config.model) {
+    if (!ready) {
       respond(response, 503, { error: "not_configured" })
       return
     }
@@ -177,16 +157,16 @@ export function createThemisServer(config: ThemisConfig, fetchImpl: typeof fetch
 
     active++
     const controller = new AbortController()
-    const timer = setTimeout(() => controller.abort(), config.timeoutMs ?? 30_000)
+    const timer = setTimeout(() => controller.abort(), config.timeoutMs ?? 60_000)
     timer.unref()
     response.on("close", () => controller.abort())
     try {
       const messages = validateMessages(await readJson(request))
-      const reply = await generateReply(messages, config, fetchImpl, controller.signal)
-      respond(response, 200, { reply })
+      const answer = await answerQuestion(messages, config, fetchImpl, controller.signal)
+      respond(response, 200, answer)
     } catch (failure) {
-      const status = failure instanceof HttpError ? failure.status : controller.signal.aborted ? 504 : 502
-      const code = failure instanceof HttpError ? failure.code : controller.signal.aborted ? "request_timeout" : "provider_unavailable"
+      const status = failure instanceof HttpError || failure instanceof ProviderError ? failure.status : controller.signal.aborted ? 504 : 502
+      const code = failure instanceof HttpError || failure instanceof ProviderError ? failure.code : controller.signal.aborted ? "request_timeout" : "provider_unavailable"
       if (status === 429) response.setHeader("Retry-After", "60")
       respond(response, status, { error: code })
     } finally {

@@ -52,22 +52,122 @@ GITHUB_PAGES=true npm run build
 
 ## THEMIS
 
-THEMIS is inspired by [Themis](https://en.wikipedia.org/wiki/Themis), associated with justice, law, and order. The Greek-first chat panel uses a minimal white box with gold borders, text, and controls. Its first scope is the firm's published services, team, and locations; its instructions direct specific legal cases to a lawyer.
+THEMIS is inspired by [Themis](https://en.wikipedia.org/wiki/Themis), associated with justice, law, and order. The Greek-first chat panel uses a minimal white box with black text and gold borders and controls. Its first scope is the firm's published services, team, and locations; its instructions direct specific legal cases to a lawyer.
 
-The website stays a static export. A separate Node.js service calls the [OpenAI Responses API](https://developers.openai.com/api/docs/quickstart) with the API key on the backend. The service reads the canonical firm copy from `lib/content.ts` when it starts; restart it after content updates.
+The website stays a static export. A separate Node.js service calls the [OpenAI Responses API](https://developers.openai.com/api/docs/quickstart) with the API key on the backend and stores approved knowledge in SQLite at `data/themis.sqlite`. The API creates the database and refreshes the published website records from `lib/content.ts` when it starts; restart it after content updates. Manually imported records survive this refresh.
+
+For each question, THEMIS follows this order:
+
+1. Search the local database for approved, unexpired passages. Ask the model whether those passages actually support an answer. A practice-area description alone is not evidence for a legal rule. A supported answer returns immediately with links to its database sources.
+2. If no supported database answer is available, use OpenAI's [web search tool](https://developers.openai.com/api/docs/guides/tools-web-search). Require an actual search and valid clickable citations from the configured official domains, initially `gov.gr`, `et.gr`, and `europa.eu`.
+3. If neither source provides evidence, explain that the answer could not be verified. An optional model-knowledge fallback can provide a clearly labelled general explanation; it is disabled by default and its instructions exclude current legal rules and individual deadlines.
+
+The model's training knowledge is not a database we can search or update. The application-owned SQLite database is the local source we can inspect, approve, and maintain. Local search uses Greek-normalized full-text matching and bounded excerpts. Optional Drive knowledge uses asynchronous OpenAI managed retrieval, filtered by a separate approved-document catalogue. Answer coverage and legal boundaries depend on model behaviour and still need evaluation with a real provider.
+
+### Manage the knowledge database
+
+Use Node.js 22.13 or newer (Node.js 24 is used for local verification). These commands work without an API key:
+
+```bash
+npm run themis:knowledge -- seed
+npm run themis:knowledge -- list
+npm run themis:knowledge -- search 'νομική υποστήριξη για ακίνητα'
+npm run themis:knowledge -- import approved-knowledge.json
+npm run themis:knowledge -- remove faq:services
+```
+
+The initial database contains only published firm information, services, team, locations, and the absence of unpublished contact details. Legal reference documents and additional FAQs must be reviewed and imported separately. The import command accepts a JSON array of records, for example:
+
+```json
+[
+  {
+    "id": "faq:services",
+    "title": "Νομική υποστήριξη για ακίνητα",
+    "content": "Η εταιρεία παρέχει νομική υποστήριξη σε ζητήματα ακινήτων, εμπράγματων δικαιωμάτων και συναλλαγών επί ακινήτων.",
+    "sourceUrl": "https://kl1me.github.io/souzana/practice-areas/#real-estate",
+    "tags": ["ακίνητα", "real estate"],
+    "approved": true,
+    "updatedAt": "2026-10-02T00:00:00Z",
+    "expiresAt": null,
+    "origin": "manual"
+  }
+]
+```
+
+Each source URL should point to the actual approved public document. Draft records use `approved: false`; outdated records can have an `expiresAt` timestamp or be removed. IDs beginning with `website:` or `drive:` are reserved. Imports validate all records before writing and commit together. The local import command imports text; it does not extract PDF/Word content or provide an administration interface.
+
+Set `THEMIS_DATABASE_PATH` in the private backend environment to change the database location. Keep it on a persistent disk, outside the website's `public` directory, and back it up. The database and its SQLite sidecar files are excluded from Git. It stores knowledge documents, not visitor messages. Web responses are never automatically promoted into approved knowledge.
+
+### Approved Google Drive documents
+
+The first Drive integration is implemented as an operator-run publishing workflow. Visitors do not log into Drive. The Node API searches approved indexed documents alongside the website database, verifies their approval versions again after generation, and keeps the same answer/citation/web-fallback flow. It does not retrieve directly from Drive for each visitor question.
+
+This workflow supports direct children of one dedicated **Approved** folder: Google Docs exported as plain text, TXT, Markdown, PDF, and DOCX. It does not recurse into subfolders, follow shortcuts, or import native Sheets/Slides. Individual downloads are limited to 10 MiB and an inventory to 1000 files. PDF/DOCX parsing is performed by OpenAI's managed index; scanned pages, tables, and Greek extraction quality require evaluation with actual sample documents.
+
+To connect later, provide the folder ID/link and authorize a dedicated backend identity to read it. The backend also needs a Google credential file, an OpenAI API key/model, and eventual hosting. A folder link alone does not configure these accounts. `THEMIS_GOOGLE_CREDENTIALS_FILE` points to a server-held Google credential file used by `google-auth-library`; prefer a dedicated service account shared into only the Approved folder without domain-wide delegation. User OAuth credentials can use the same file-based authentication adapter when appropriate. The configured `drive.readonly` scope is broad, so constrain identity access through sharing plus the explicit folder allowlist. See [Google Drive scopes](https://developers.google.com/workspace/drive/api/guides/api-specific-auth).
+
+Keep credentials outside Git and public files. Leave `THEMIS_DRIVE_ENABLED=false` while preparing and validating the collection. Set `THEMIS_DRIVE_FOLDER_ID` and `THEMIS_GOOGLE_CREDENTIALS_FILE` in `.env.themis`, then use:
+
+```bash
+# Offline status; no provider or Drive requests.
+npm run themis:drive -- status
+
+# Read the folder and generate exact-version review metadata; does not upload documents.
+npm run themis:drive -- review data/drive-review-1.json
+
+# After reviewing original content, public citations, and expiry in that JSON:
+npm run themis:drive -- approve data/drive-review-1.json
+
+# Create one dedicated managed index and persist its ID, or record THEMIS_VECTOR_STORE_ID.
+npm run themis:drive -- init
+
+# Publish only approved versions, reconcile changes/removals, and retry pending cleanup.
+npm run themis:drive -- sync
+
+# Block one document immediately without Drive or OpenAI access.
+npm run themis:drive -- withdraw DRIVE_FILE_ID
+```
+
+The review file contains a SHA-256 hash and Drive version for every supported document, along with `title`, `sourceUrl`, `reviewedAt`, `expiresAt`, and `publicCitationVerified: false`. An operator checks the exact original content, sets its actual public citation URL, confirms that URL works without signing in, sets a suitable review expiry, and changes `publicCitationVerified` to `true` for the records being approved. Unreviewed records should be omitted from the approval file. No arbitrary citation URL is fetched by the sync service. Private Drive links are not automatically used as public citations. Approval is tied to both hash and version; even a metadata edit can increment the [Drive version](https://developers.google.com/workspace/drive/api/reference/rest/v3/files) and require another review.
+
+`init` records the vector-store ID in `THEMIS_DRIVE_CATALOGUE_PATH` (default `data/themis-drive.json`); `THEMIS_VECTOR_STORE_ID` is optional when that catalogue already contains the ID. Creation is attempted once. If creation has an ambiguous outcome, inspect the OpenAI project and explicitly configure the existing store ID before retrying; do not blindly create duplicate stores. Use a dedicated index for this folder: cleanup removes both its attachments and the uploaded files owned by this catalogue.
+
+After a successful sync and live evaluation, set `THEMIS_DRIVE_ENABLED=true` and restart the API. Each retrieved hit must match the catalogue's active file ID, exact hash/version, unexpired approval, and approved public citation metadata. Failed staging and withdrawn versions cannot authorize themselves through provider attributes. Index deletions are [eventually consistent](https://developers.openai.com/api/docs/guides/retrieval), so the catalogue blocks evidence before remote cleanup and retries failed cleanup on later syncs. Retrieved evidence is verified before model input and after generation; insufficient remote passages are not carried into the web-search prompt.
+
+**Freshness:** this stage performs manual sync. Edits, moves, and removals in Drive are recognized on the next successful sync, not instantly at each visitor request. Explicit `withdraw` and approval expiry are enforced immediately by catalogue reads. During a scan, or after an incomplete/failed scan, remote knowledge is unavailable. `THEMIS_DRIVE_MAX_AGE_HOURS` defaults to 24 (maximum 168); after that interval without a verified inventory, requests fail with `knowledge_unavailable` rather than treating uncertain knowledge as an empty search. Both Drive and local retrieval must succeed when Drive mode is enabled. Manual operators must run sync within that interval; scheduled sync is a later stage.
+
+The local catalogue uses private file permissions, atomic replacement, revision checks, and a command lock. If a crashed command leaves a lock, verify that no command is running before removing that specific lock file. Back up the catalogue together with the website database. It stores approval/current-version metadata and pending cleanup IDs; it is not a complete historical audit log. Keep the catalogue on durable local storage. **This implementation does not deploy to Cloud Run**: its disposable local filesystem requires a future durable remote catalogue adapter, such as a versioned Cloud Storage manifest with conditional writes. See [Cloud Run storage](https://docs.cloud.google.com/run/docs/overview/what-is-cloud-run) and [Cloud Storage preconditions](https://docs.cloud.google.com/storage/docs/request-preconditions).
+
+Before production activation, evaluate Greek paraphrases, exact source support, public citation access, PDF/DOCX extraction, expired documents, changed approvals, moved/deleted files, missing answers, prompt injection, latency, and provider cost using a small approved collection. Local tests establish the workflow and API contracts; they do not establish live Drive permission, OpenAI indexing quality, model grounding, or public deployment.
 
 ### Build and review without an API key
+
+For **live private testing with your ChatGPT/Codex subscription**, install/sign in to the Codex CLI with `codex login`, then run:
+
+```bash
+npm run themis:codex
+```
+
+Open `http://localhost:3001` and click THEMIS. This uses your existing ChatGPT login through the [local Codex CLI](https://learn.chatgpt.com/docs/non-interactive-mode), checks that login is subscription-based before each answer, and counts toward your plan usage. No credential is copied into the website, and no API key is needed. `THEMIS_CODEX_COMMAND` can point to your installed Codex executable if it is not on PATH.
+
+This preview binds both services to `127.0.0.1`, accepts only local preview origins, and permits one generation at a time. Each request uses a temporary workspace, a read-only sandbox, disabled shell/apps/plugins/hooks/memory tools, structured output, a sanitized child environment, and a bounded timeout. The adapter uses `gpt-5.5` with low reasoning effort because it supports native web search without the Code Mode host. Database and general responses have web tools disabled; the web stage enables [live Codex search](https://learn.chatgpt.com/docs/web-search). Codex owns authentication and token refresh. Temporary prompt/schema files are removed after each request; chat history is held in the browser's memory. The adapter requests ephemeral Codex sessions; this does not change OpenAI's account/provider data policies.
+
+Firm questions use the approved website database and clickable sources. When the database cannot support an answer, the local preview searches the public web, with instructions to use primary sources and official authorities for legal information. A cited web answer requires a completed search and the exact URLs of pages Codex opened; invented or unopened source URLs are omitted from the links shown. If no supporting source is available, the local test enables a clearly labelled general-information response. With general fallback enabled, simple Greek/English current-time and date questions use the server clock directly after retrieval, without a model or web request; these answers identify Greece time (`Europe/Athens`). Each generated answer also receives a fresh clock snapshot, with Greece's local date and daylight-saving adjustment. Drive is not connected. The production API remains API-key based with its configured official-domain restrictions and stricter fallback; neither the subscription adapter nor this local preview is a public hosting service. Run real API/Drive acceptance tests before switching the published website to that backend.
+
+The original sample-only preview remains available:
 
 ```bash
 npm install
 npm run themis:preview
 ```
 
-Open `http://localhost:3001`. This starts a local website and sample-response service on loopback only. The panel visibly labels the replies as examples; no OpenAI request or API key is used. Type a question about the firm's services, team, or locations, or start a new conversation. Stop both processes with Ctrl+C. Preview labels are enabled only in development, and the production API command always uses the real provider adapter.
+Open `http://localhost:3001`. This starts a local website and sample-response service on loopback only, with a temporary in-memory SQLite database. Database retrieval runs locally; model decisions and web responses are mocked. The panel visibly labels the replies as examples; no OpenAI request or API key is used. Type a question about the firm's services, team, or locations, or start a new conversation. Stop both processes with Ctrl+C. Preview labels are enabled only in development, and the production API command always uses the real provider adapter.
 
 ### Local connection when ready
 
-Use Node.js 22 or newer. Install dependencies, then copy `.env.example` to `.env.local` and `.env.themis.example` to `.env.themis`. Set `OPENAI_API_KEY` and `OPENAI_MODEL` in `.env.themis` using a Responses API model enabled for your OpenAI project. Keep the private key in the backend environment, never in a `NEXT_PUBLIC_` variable.
+Install dependencies, then copy `.env.example` to `.env.local` and `.env.themis.example` to `.env.themis`. Set `OPENAI_API_KEY` and `OPENAI_MODEL` in `.env.themis` using a Responses API model that supports structured outputs and web search and is enabled for your OpenAI project. Keep the private key in the backend environment, never in a `NEXT_PUBLIC_` variable. Model compatibility requires a live check when credentials are available.
+
+`THEMIS_WEB_SEARCH_ENABLED=false` disables web searches. `THEMIS_WEB_ALLOWED_DOMAINS` is a comma-separated list of allowed domain names, without schemes or paths. `THEMIS_ALLOW_GENERAL_FALLBACK=true` enables the labelled model-knowledge fallback. These settings live in the backend environment.
 
 Run these in separate terminals:
 
@@ -80,11 +180,11 @@ Open `http://localhost:3000`. `NEXT_PUBLIC_THEMIS_API_URL` defaults to the examp
 
 ### Hosting alongside GitHub Pages
 
-Host the Node.js service separately behind HTTPS, with `npm ci` and `npm run themis:api`. Set the private key and model through that host's secret environment. Set `THEMIS_HOST=0.0.0.0` and `THEMIS_PORT` to the port required by your host; set `THEMIS_ALLOWED_ORIGINS=https://kl1me.github.io` for the current site (an origin has no `/souzana` path or trailing slash).
+Host the Node.js service separately behind HTTPS, with `npm ci` and `npm run themis:api`, and a persistent volume for `THEMIS_DATABASE_PATH`. GitHub Pages cannot host this service or database. SQLite is suitable for this initial single-server service; a deployment with multiple application servers would need a shared database such as PostgreSQL and a retrieval adapter. Set the private key and model through that host's secret environment. Set `THEMIS_HOST=0.0.0.0` and `THEMIS_PORT` to the port required by your host; set `THEMIS_ALLOWED_ORIGINS=https://kl1me.github.io` for the current site (an origin has no `/souzana` path or trailing slash).
 
 Set the GitHub repository **variable** `THEMIS_API_URL` to the full HTTPS endpoint, for example `https://your-api-host.example/api/themis`. The Pages workflow embeds only this public URL at build time. The API key belongs exclusively to the backend host. Updating the URL requires rebuilding the website.
 
-The API applies body/history limits, a 30-second upstream timeout, four concurrent requests, and 12 requests per minute per socket address. It does not trust forwarded IP headers. Behind a proxy, enforce visitor rate limits and spend controls at the trusted gateway; the built-in limit will otherwise apply to the proxy address. Origin checks are browser CORS protection, not authentication, and cannot prevent scripted callers from forging an Origin header.
+The API applies body/history limits, a 60-second total answer timeout, four concurrent requests, and 12 requests per minute per socket address. It does not trust forwarded IP headers. Behind a proxy, enforce visitor rate limits and spend controls at the trusted gateway; the built-in limit will otherwise apply to the proxy address. Origin checks are browser CORS protection, not authentication, and cannot prevent scripted callers from forging an Origin header.
 
 The application does not write transcripts to disk or browser storage. The panel holds the conversation in page memory until a new chat or reload; each request sends at most the last nine exchanges and the current question, within a character budget. OpenAI requests use `store: false` to disable response storage; this does not establish zero provider retention ([OpenAI data controls](https://developers.openai.com/api/docs/guides/your-data)).
 
@@ -96,4 +196,4 @@ npm run lint
 GITHUB_PAGES=true npm run build
 ```
 
-API tests use a mocked provider and local HTTP requests. They verify request validation, CORS, private-key handling, the Responses API contract, rate limits, timeout recovery, and error handling. A real OpenAI answer and public hosting require configured credentials and are separate acceptance checks. The assistant's legal boundaries are prompt instructions, not a tested guarantee of model behaviour.
+Tests use real local SQLite databases/catalogues, mocked Drive/index/model APIs, and local HTTP requests. They verify persistence, exact-version approvals, atomic inventory, publication/withdrawal/cleanup, revocation during generation, Greek retrieval, asynchronous database-first routing, fallback rules, citations, CORS, private-key handling, rate limits, timeout recovery, and error handling. Real Drive access, OpenAI indexing/answers, search quality, and public hosting require configured credentials and are separate acceptance checks. The assistant's legal boundaries and evidence sufficiency checks are prompt instructions, not a tested guarantee of model behaviour.
