@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { usePathname } from "next/navigation"
 import { Menu } from "lucide-react"
 import { site } from "@/lib/content"
@@ -19,6 +19,32 @@ import {
 export default function Header() {
   const pathname = usePathname()
   const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const [isHeroVisible, setIsHeroVisible] = useState(true)
+  const headerRef = useRef<HTMLElement>(null)
+  const isHome = pathname === "/"
+
+  useEffect(() => {
+    if (!isHome) return
+    const hero = document.getElementById("home-visual")
+    if (!hero) return
+
+    let frame = 0
+    function scheduleUpdate() {
+      window.cancelAnimationFrame(frame)
+      frame = window.requestAnimationFrame(() => {
+        const headerHeight = headerRef.current?.getBoundingClientRect().height ?? 96
+        setIsHeroVisible(hero!.getBoundingClientRect().bottom > headerHeight)
+      })
+    }
+    scheduleUpdate()
+    window.addEventListener("scroll", scheduleUpdate, { passive: true })
+    window.addEventListener("resize", scheduleUpdate)
+    return () => {
+      window.cancelAnimationFrame(frame)
+      window.removeEventListener("scroll", scheduleUpdate)
+      window.removeEventListener("resize", scheduleUpdate)
+    }
+  }, [isHome])
 
   const isActive = (href: string) => {
     if (href === "/") {
@@ -28,17 +54,24 @@ export default function Header() {
   }
 
   return (
-    <header className="sticky top-0 z-40 border-b border-accent/30 bg-background/90 backdrop-blur">
+    <header
+      ref={headerRef}
+      className={cn(
+        "sticky top-0 z-40 border-b border-accent/30 bg-background/90 backdrop-blur transition-colors duration-300",
+        isHome && "home-header",
+        isHome && isHeroVisible && "home-header-overlay"
+      )}
+    >
       <div className="mx-auto flex h-20 w-full max-w-[1200px] items-center justify-between px-5 sm:h-24 sm:px-6">
         <Link
           href="/"
           className="flex min-w-0 max-w-[260px] flex-col gap-1 leading-none sm:max-w-none"
           aria-label={site.name}
         >
-          <span className="whitespace-nowrap font-serif text-[1.02rem] font-semibold tracking-[0.035em] text-foreground sm:text-[1.2rem] lg:text-[1.3rem]">
+          <span className="header-wordmark whitespace-nowrap font-serif text-[1.02rem] font-semibold tracking-[0.035em] text-foreground sm:text-[1.2rem] lg:text-[1.3rem]">
             {site.wordmark.primary}
           </span>
-          <span className="whitespace-nowrap text-[0.48rem] font-medium uppercase tracking-[0.18em] text-muted-foreground sm:text-[0.56rem] sm:tracking-[0.24em]">
+          <span className="header-tagline whitespace-nowrap text-[0.48rem] font-medium uppercase tracking-[0.18em] text-muted-foreground sm:text-[0.56rem] sm:tracking-[0.24em]">
             {site.wordmark.secondary} <span aria-hidden="true">•</span>{" "}
             {site.wordmark.subtitle}
           </span>
@@ -49,7 +82,7 @@ export default function Header() {
               key={item.href}
               href={item.href}
               className={cn(
-                "relative text-muted-foreground transition-colors after:absolute after:-bottom-2 after:left-0 after:h-px after:w-0 after:bg-accent/70 after:transition-all hover:text-foreground hover:after:w-full",
+                "header-nav-link relative text-muted-foreground transition-colors after:absolute after:-bottom-2 after:left-0 after:h-px after:w-0 after:bg-accent/70 after:transition-all hover:text-foreground hover:after:w-full",
                 isActive(item.href) &&
                   "text-foreground after:w-full after:bg-accent"
               )}
@@ -64,7 +97,7 @@ export default function Header() {
             <Button
               variant="ghost"
               size="icon"
-              className="size-11 md:hidden"
+              className="header-menu-trigger size-11 md:hidden"
               aria-label={isMenuOpen ? "Κλείσιμο μενού" : "Άνοιγμα μενού"}
             >
               <Menu className="size-6" />

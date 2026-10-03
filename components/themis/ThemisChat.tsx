@@ -2,7 +2,7 @@
 
 import * as Dialog from "@radix-ui/react-dialog"
 import Link from "next/link"
-import { ArrowUp, LoaderCircle, RotateCcw, X } from "lucide-react"
+import { ArrowRight, ArrowUp, ArrowUpRight, LoaderCircle, RotateCcw, X } from "lucide-react"
 import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from "react"
 import { cn } from "@/lib/utils"
 import { themis, THEMIS_MAX_CONVERSATION_LENGTH, THEMIS_MAX_HISTORY, THEMIS_MAX_MESSAGE_LENGTH, type ThemisMessage } from "@/lib/themis"
@@ -12,6 +12,7 @@ import { site } from "@/lib/content"
 
 const endpoint = process.env.NEXT_PUBLIC_THEMIS_API_URL?.trim()
 const preview = process.env.NODE_ENV === "development" && process.env.NEXT_PUBLIC_THEMIS_PREVIEW === "true"
+const invitationDismissedKey = "souzana-themis-invitation-dismissed"
 
 function replyContent(message: ThemisMessage, openInternalSource: () => void) {
   const parts = []
@@ -43,11 +44,52 @@ export default function ThemisChat() {
   const [draft, setDraft] = useState("")
   const [sending, setSending] = useState(false)
   const [error, setError] = useState("")
+  const [showInvitation, setShowInvitation] = useState(false)
+  const titleRef = useRef<HTMLHeadingElement>(null)
+  const invitationTimerRef = useRef<number | null>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
   const conversationRef = useRef<HTMLDivElement>(null)
   const requestRef = useRef<AbortController | null>(null)
 
   useEffect(() => () => requestRef.current?.abort(), [])
+
+  useEffect(() => {
+    if (!endpoint) return
+    try {
+      if (window.sessionStorage.getItem(invitationDismissedKey)) return
+    } catch {
+      // The launcher also works when browser storage is unavailable.
+    }
+    const timer = window.setTimeout(() => {
+      invitationTimerRef.current = null
+      setShowInvitation(true)
+    }, 3500)
+    invitationTimerRef.current = timer
+    return () => window.clearTimeout(timer)
+  }, [])
+
+  function dismissInvitation() {
+    if (invitationTimerRef.current !== null) {
+      window.clearTimeout(invitationTimerRef.current)
+      invitationTimerRef.current = null
+    }
+    setShowInvitation(false)
+    try {
+      window.sessionStorage.setItem(invitationDismissedKey, "1")
+    } catch {
+      // Dismiss the invitation for this page even without browser storage.
+    }
+  }
+
+  function changeOpen(nextOpen: boolean) {
+    setOpen(nextOpen)
+    if (nextOpen) dismissInvitation()
+  }
+
+  function chooseStarter(question: string) {
+    setDraft(question)
+    inputRef.current?.focus()
+  }
 
   useEffect(() => {
     if (open && conversationRef.current) {
@@ -115,26 +157,66 @@ export default function ThemisChat() {
   }
 
   return (
-    <Dialog.Root open={open} onOpenChange={setOpen}>
-      <Dialog.Trigger asChild>
-        <button
-          type="button"
-          className="fixed right-4 bottom-5 z-40 flex min-h-12 items-center justify-center rounded-xl border border-accent bg-white px-6 py-3 text-xs font-semibold tracking-[0.2em] text-black shadow-sm transition-colors hover:bg-accent/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-4 sm:right-7 sm:bottom-7"
-          aria-label="Συνομιλήστε με τη THEMIS"
-        >
-          THEMIS
-        </button>
-      </Dialog.Trigger>
+    <Dialog.Root open={open} onOpenChange={changeOpen}>
+      <div className="themis-launcher">
+        {showInvitation && !open && (
+          <div className="themis-invitation">
+            <button
+              type="button"
+              onClick={dismissInvitation}
+              className="themis-invitation-close"
+              aria-label="Απόκρυψη πρόσκλησης THEMIS"
+            >
+              <X className="size-4" aria-hidden="true" />
+            </button>
+            <button
+              type="button"
+              onClick={() => changeOpen(true)}
+              className="themis-invitation-content"
+              aria-label="Γνωρίστε τη THEMIS, την ψηφιακή βοηθό της εταιρείας"
+              aria-haspopup="dialog"
+              aria-controls="themis-dialog"
+            >
+              <span className="themis-invitation-title">{themis.invitation.title}</span>
+              <span className="themis-invitation-description">{themis.invitation.description}</span>
+              <span className="themis-invitation-action">
+                {themis.invitation.action}
+                <ArrowRight className="size-4" aria-hidden="true" />
+              </span>
+            </button>
+          </div>
+        )}
+        <Dialog.Trigger asChild>
+          <button
+            type="button"
+            className="themis-launch-button"
+            aria-controls="themis-dialog"
+            aria-label={endpoint ? "Ρωτήστε τη THEMIS, την ψηφιακή βοηθό μας" : "Γνωρίστε τη THEMIS, την ψηφιακή βοηθό μας"}
+          >
+            <span className="themis-monogram" aria-hidden="true">T</span>
+            <span className="themis-launch-copy">
+              <span className="themis-launch-title">{endpoint ? "Ρωτήστε τη THEMIS" : "Γνωρίστε τη THEMIS"}</span>
+              <span className="themis-launch-subtitle">Η ψηφιακή βοηθός μας</span>
+            </span>
+            <ArrowUpRight className="size-4 shrink-0" aria-hidden="true" />
+          </button>
+        </Dialog.Trigger>
+      </div>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-50 bg-white/60 data-[state=open]:animate-in data-[state=open]:fade-in-0" />
         <Dialog.Content
-          className="fixed inset-x-3 bottom-3 z-50 flex h-[min(560px,calc(100dvh-24px))] flex-col overflow-hidden rounded-xl border border-accent bg-white text-black shadow-sm outline-none data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:slide-in-from-bottom-3 sm:inset-x-auto sm:right-7 sm:bottom-7 sm:w-[420px]"
-          onOpenAutoFocus={endpoint ? (event) => { event.preventDefault(); inputRef.current?.focus() } : undefined}
+          id="themis-dialog"
+          className="fixed inset-x-3 bottom-3 z-50 flex h-[min(600px,calc(100dvh-24px))] flex-col overflow-hidden rounded-xl border border-accent bg-white text-black shadow-sm outline-none data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:slide-in-from-bottom-3 sm:inset-x-auto sm:right-7 sm:bottom-7 sm:h-[min(600px,calc(100dvh-56px))] sm:w-[420px]"
+          onOpenAutoFocus={(event) => {
+            event.preventDefault()
+            if (endpoint && (messages.length || draft)) inputRef.current?.focus()
+            else titleRef.current?.focus()
+          }}
         >
           <div className="flex shrink-0 items-center gap-2 border-b border-accent/30 px-5 py-3">
             <div className="flex-1">
-              <Dialog.Title className="text-xs font-semibold tracking-[0.2em]">{themis.name}</Dialog.Title>
-              <Dialog.Description className="sr-only">{themis.subtitle}</Dialog.Description>
+              <Dialog.Title ref={titleRef} tabIndex={-1} className="text-xs font-semibold tracking-[0.2em] outline-none">{themis.name}</Dialog.Title>
+              <Dialog.Description className="mt-1 text-[11px] text-[#6d685e]">{themis.subtitle}</Dialog.Description>
               {preview && <p className="mt-1 text-[10px]">Ενδεικτική προεπισκόπηση</p>}
             </div>
             <button type="button" onClick={reset} disabled={sending || !messages.length}
@@ -149,6 +231,28 @@ export default function ThemisChat() {
 
           <div ref={conversationRef} className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-5">
             {!endpoint && <p role="status" className="text-xs leading-relaxed">Η συνομιλία θα είναι διαθέσιμη σύντομα.</p>}
+            {!messages.length && endpoint && (
+              <div className="themis-welcome">
+                <span className="themis-welcome-monogram" aria-hidden="true">T</span>
+                <h2 className="font-serif text-[1.9rem] leading-tight text-[#17212a]">Πώς μπορώ να σας βοηθήσω;</h2>
+                <p className="mt-3 text-sm leading-relaxed text-[#6d685e]">
+                  Επιλέξτε ένα θέμα ή γράψτε τη δική σας ερώτηση.
+                </p>
+                <div className="mt-6 divide-y divide-accent/20 border-y border-accent/20">
+                  {themis.starters.map((starter) => (
+                    <button
+                      key={starter.label}
+                      type="button"
+                      onClick={() => chooseStarter(starter.question)}
+                      className="themis-starter"
+                    >
+                      <span>{starter.label}</span>
+                      <ArrowRight className="size-4 text-[#806321]" aria-hidden="true" />
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
             <div role="log" aria-label="Μηνύματα συνομιλίας" aria-live="polite" aria-relevant="additions" className="space-y-4">
               {messages.map((message, index) => (
                 <div key={index} className={cn("flex flex-col gap-1.5", message.role === "user" ? "items-end" : "items-start")}>

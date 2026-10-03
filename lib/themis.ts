@@ -40,4 +40,23 @@ export function parseThemisAnswer(value: unknown): ThemisAnswer | null {
 export const themis = {
   name: "THEMIS",
   subtitle: "Η ψηφιακή βοηθός σας",
+  invitation: {
+    title: "Έχετε μια ερώτηση;",
+    description: "Γνωρίστε την εταιρεία και τις υπηρεσίες μας με τη THEMIS.",
+    action: "Ας μιλήσουμε",
+  },
+  starters: [
+    {
+      label: "Τομείς εξειδίκευσης",
+      question: "Σε ποιους τομείς δικαίου δραστηριοποιείται η εταιρεία;",
+    },
+    {
+      label: "Γνωρίστε την ομάδα",
+      question: "Ποιοι απαρτίζουν την ομάδα της εταιρείας;",
+    },
+    {
+      label: "Η προσέγγισή μας",
+      question: "Πώς προσεγγίζει η εταιρεία μια νέα υπόθεση;",
+    },
+  ],
 }
