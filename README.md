@@ -176,9 +176,19 @@ npm run dev
 
 ### Hosting alongside GitHub Pages
 
-Host the Node.js service separately behind HTTPS, with `npm ci` and `npm run themis:api`, and a persistent volume for `THEMIS_DATABASE_PATH`. GitHub Pages cannot host this service or database. SQLite is suitable for this initial single-server service; a deployment with multiple application servers would need a shared database such as PostgreSQL and a retrieval adapter. Set the private key and model through that host's secret environment. Set `THEMIS_HOST=0.0.0.0` and `THEMIS_PORT` to the port required by your host; set `THEMIS_ALLOWED_ORIGINS=https://kl1me.github.io` for the current site (an origin has no `/souzana` path or trailing slash).
+Host the Node.js service separately behind HTTPS, with `npm ci` and `npm run themis:api`, and a persistent volume for `THEMIS_DATABASE_PATH`. GitHub Pages cannot host this service or database. SQLite is suitable for this initial single-server service; a deployment with multiple application servers would need a shared database such as PostgreSQL and a retrieval adapter. Set the private key and model through that host's secret environment. Set `THEMIS_HOST=0.0.0.0`; the API accepts the host's `PORT`, or an explicit `THEMIS_PORT` override. Set `THEMIS_ALLOWED_ORIGINS=https://kl1me.github.io` for the current site (an origin has no `/souzana` path or trailing slash).
 
 Set the GitHub repository **variable** `THEMIS_API_URL` to the full HTTPS endpoint, for example `https://your-api-host.example/api/themis`. The Pages workflow embeds only this public URL at build time. The API key belongs exclusively to the backend host. Updating the URL requires rebuilding the website.
+
+#### Free Render test deployment
+
+[Start the THEMIS test deployment on Render](https://render.com/deploy?repo=https%3A%2F%2Fgithub.com%2FKL1ME%2Fsouzana).
+
+The included `render.yaml` creates one free Node.js API service in Frankfurt, with the GitHub Pages origin and official web sources configured. Create/sign into your Render account, review the free service, and enter `OPENAI_API_KEY` only in Render's secret field. The Blueprint uses [`sync: false`](https://render.com/docs/blueprint-spec#prompting-for-secret-values), so no key is stored in the repository. It leaves automatic deploys off; use Render's manual deploy when updating the backend.
+
+After Render reports the service as live, copy its HTTPS address and append `/api/themis`. Save that endpoint as the GitHub repository variable `THEMIS_API_URL` under **Settings → Secrets and variables → Actions → Variables**, then rerun **Deploy to GitHub Pages**. Verify the deployed chat with both a website question and a question requiring an official web source. Creating this Blueprint alone does not connect the published website.
+
+This free configuration is for the initial test using website knowledge only. [Render's free service](https://render.com/docs/free) sleeps after 15 minutes of inactivity and can take about a minute to wake up. Its local SQLite data is lost on restart or redeploy; approved website content is recreated at startup. Keep Drive and manual knowledge imports disabled on this test host. Before adding those documents or publishing for regular use, move the database and catalogue to durable storage; Render requires a paid service for a [persistent disk](https://render.com/docs/disks). Model/API usage remains separate from hosting.
 
 The API applies body/history limits, a 60-second total answer timeout, four concurrent requests, and 12 requests per minute per socket address. It does not trust forwarded IP headers. Behind a proxy, enforce visitor rate limits and spend controls at the trusted gateway; the built-in limit will otherwise apply to the proxy address. Origin checks are browser CORS protection, not authentication, and cannot prevent scripted callers from forging an Origin header.
 

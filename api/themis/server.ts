@@ -22,7 +22,7 @@ async function main() {
       throw new Error("THEMIS_ALLOWED_ORIGINS must contain exact HTTP(S) origins without paths or trailing slashes.")
     }
   }
-  const port = Number(process.env.THEMIS_PORT ?? 8787)
+  const port = Number(process.env.THEMIS_PORT ?? process.env.PORT ?? 8787)
   if (!Number.isInteger(port) || port < 1 || port > 65535) throw new Error("Invalid THEMIS_PORT.")
   const webAllowedDomains = (process.env.THEMIS_WEB_ALLOWED_DOMAINS ?? "gov.gr,et.gr,europa.eu").split(",").map((domain) => domain.trim().toLowerCase())
   if (!webAllowedDomains.length || webAllowedDomains.length > 100 || webAllowedDomains.some((domain) => !/^(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z]{2,}$/.test(domain))) {

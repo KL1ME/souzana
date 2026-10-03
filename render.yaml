@@ -1,0 +1,36 @@
+# Free test backend. Website knowledge is reseeded on startup; local data is temporary.
+# Keep Drive disabled until this service has durable storage.
+services:
+  - type: web
+    name: themis-api-test
+    runtime: node
+    plan: free
+    region: frankfurt
+    branch: main
+    autoDeployTrigger: off
+    buildCommand: npm ci --omit=dev
+    startCommand: npm run themis:api
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: NODE_ENV
+        value: production
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: OPENAI_MODEL
+        value: gpt-5.4-mini
+      - key: THEMIS_HOST
+        value: 0.0.0.0
+      - key: THEMIS_ALLOWED_ORIGINS
+        value: https://kl1me.github.io
+      - key: THEMIS_DATABASE_PATH
+        value: /tmp/themis/themis.sqlite
+      - key: THEMIS_WEB_SEARCH_ENABLED
+        value: "true"
+      - key: THEMIS_WEB_ALLOWED_DOMAINS
+        value: gov.gr,et.gr,europa.eu
+      - key: THEMIS_ALLOW_GENERAL_FALLBACK
+        value: "false"
+      - key: THEMIS_DRIVE_ENABLED
+        value: "false"
