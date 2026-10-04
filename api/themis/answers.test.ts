@@ -127,6 +127,49 @@ test("explicit model overrides retain their own reasoning defaults", async (t) =
   assert.equal(result.source, "database")
 })
 
+test("a fact-free lawyer clarification survives without citations or an extra fallback call", async (t) => {
+  for (const allowGeneralFallback of [false, true]) {
+    for (const question of ["Για ποιον τομέα δικαίου χρειάζεστε δικηγόρο;", "Σε ποιον τομέα δικαίου χρειάζεστε δικηγόρο;", "What area of law do you need a lawyer for?"]) {
+      let calls = 0
+      const result = await answerQuestion([{ role: "user", content: "Άλλο γραφείο θέλω να μου προτείνεις" }], config(t, {
+        knowledge: { search: () => [] }, allowGeneralFallback,
+      }), async () => {
+        calls++
+        return Response.json({ status: "completed", output: [
+          { type: "web_search_call", status: "completed" },
+          { type: "message", role: "assistant", content: [{ type: "output_text", text: question, annotations: [] }] },
+        ] })
+      }, new AbortController().signal)
+      assert.deepEqual(result, { reply: question, source: "general", sources: [], citations: [] })
+      assert.equal(calls, 1)
+      assert.ok(parseThemisAnswer(result))
+    }
+  }
+})
+
+test("clarification handling cannot authorize added facts, unsupported questions or invalid citations", async (t) => {
+  for (const text of [
+    "Για ποιον τομέα δικαίου χρειάζεστε δικηγόρο; Η προθεσμία είναι δέκα ημέρες.",
+    "Ο καλύτερος δικηγόρος είναι ο Χ. Για ποιον τομέα δικαίου χρειάζεστε δικηγόρο;",
+    "Σας ενδιαφέρει η νόμιμη προθεσμία των δέκα ημερών;",
+  ]) {
+    const result = await answerQuestion(missing, config(t, { knowledge: { search: () => [] } }), async () =>
+      Response.json({ status: "completed", output: [
+        { type: "web_search_call", status: "completed" },
+        { type: "message", role: "assistant", content: [{ type: "output_text", text, annotations: [] }] },
+      ] }), new AbortController().signal)
+    assert.equal(result.source, "unavailable")
+  }
+  const text = "Για ποιον τομέα δικαίου χρειάζεστε δικηγόρο;"
+  const result = await answerQuestion(missing, config(t, { knowledge: { search: () => [] } }), async () =>
+    Response.json({ status: "completed", output: [
+      { type: "web_search_call", status: "completed" },
+      { type: "message", role: "assistant", content: [{ type: "output_text", text,
+        annotations: [{ type: "url_citation", url: "https://attacker.test/", title: "Unapproved", start_index: 0, end_index: text.length }] }] },
+    ] }), new AbortController().signal)
+  assert.equal(result.source, "unavailable")
+})
+
 test("simple clock questions use the server clock after retrieval without model or web calls", async (t) => {
   let searches = 0
   const base = config(t, { allowGeneralFallback: true })

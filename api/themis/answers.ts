@@ -167,6 +167,13 @@ export async function answerQuestion(messages: ThemisMessage[], config: AnswerCo
     if (searched && sources.length && sources.length <= 16 && !invalidCitation && !overlap && reply.length <= 6000) {
       return { reply, source: "web", sources, citations }
     }
+    // Only these fact-free questions may omit citations. Arbitrary model text
+    // still requires verified evidence, including replies containing a question.
+    const clarification = reply.trim()
+    if (searched && !sources.length && !invalidCitation && !overlap &&
+      ["Για ποιον τομέα δικαίου χρειάζεστε δικηγόρο;", "Σε ποιον τομέα δικαίου χρειάζεστε δικηγόρο;", "What area of law do you need a lawyer for?"].includes(clarification)) {
+      return { reply: clarification, source: "general", sources: [], citations: [] }
+    }
   }
 
   if (config.allowGeneralFallback) {
