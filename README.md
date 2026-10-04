@@ -54,6 +54,8 @@ GITHUB_PAGES=true npm run build
 
 THEMIS is inspired by [Themis](https://en.wikipedia.org/wiki/Themis), associated with justice, law, and order. The Greek-first chat panel uses a minimal white box with black text and gold borders and controls. Its first scope is the firm's published services, team, and locations; its instructions direct specific legal cases to a lawyer.
 
+Answers use short paragraphs, bold section labels, bullet lists, and numbered steps. Contact details are grouped by category, with each telephone number or email on its own line. The renderer preserves citation offsets in the original answer and treats HTML and arbitrary Markdown links as text.
+
 The website stays a static export. A separate Node.js service calls the [OpenAI Responses API](https://developers.openai.com/api/docs/quickstart) with the API key on the backend and stores approved knowledge in SQLite at `data/themis.sqlite`. The API creates the database and refreshes the published website records from `lib/content.ts` when it starts; restart it after content updates. Manually imported records survive this refresh.
 
 For each question, THEMIS follows this order:
