@@ -1,5 +1,6 @@
 import assert from "node:assert/strict"
 import { once } from "node:events"
+import { request as httpRequest } from "node:http"
 import type { AddressInfo } from "node:net"
 import { test, type TestContext } from "node:test"
 import { createThemisServer, type ThemisConfig } from "./http"
@@ -164,5 +165,126 @@ test("upstream timeout releases capacity and returns a bounded failure", async (
     const response = await post()
     assert.equal(response.status, 504)
     assert.deepEqual(await response.json(), { error: "request_timeout" })
+  }
+})
+
+test("timeout bounds an adapter that ignores cancellation and frees capacity", { timeout: 2000 }, async (t) => {
+  const { post } = await fixture(t, async () => {
+    await new Promise((resolve) => setTimeout(resolve, 150))
+    return Response.json(completed)
+  }, { timeoutMs: 20, maxConcurrentRequests: 1 })
+  const response = await post()
+  assert.equal(response.status, 504)
+  assert.deepEqual(await response.json(), { error: "request_timeout" })
+  assert.equal((await post({ messages: [{ role: "user", content: "καλησπέρα" }] })).status, 200)
+})
+
+test("timeout also bounds an unfinished request body before knowledge retrieval", { timeout: 2000 }, async (t) => {
+  let searches = 0
+  const { url, post } = await fixture(t, async () => { throw new Error("must not call provider") }, {
+    timeoutMs: 20, maxConcurrentRequests: 1,
+    knowledge: { search() { searches++; return [] } },
+  })
+  const body = JSON.stringify({ messages })
+  const response = new Promise<{ status: number; body: unknown }>((resolve, reject) => {
+    const request = httpRequest(url, { method: "POST", headers: { Origin: origin, "Content-Type": "application/json" } }, (incoming) => {
+      const chunks: Buffer[] = []
+      incoming.on("data", (chunk) => chunks.push(chunk))
+      incoming.on("end", () => resolve({ status: incoming.statusCode!, body: JSON.parse(Buffer.concat(chunks).toString("utf8")) }))
+      incoming.on("error", reject)
+    })
+    request.on("error", reject)
+    request.write(body.slice(0, 5))
+    const finishBody = setTimeout(() => request.end(body.slice(5)), 150)
+    t.after(() => { clearTimeout(finishBody); request.destroy() })
+  })
+  assert.deepEqual(await response, { status: 504, body: { error: "request_timeout" } })
+  assert.equal(searches, 0)
+  assert.equal((await post({ messages: [{ role: "user", content: "hello" }] })).status, 200)
+})
+
+test("a cancelled knowledge lookup is a timeout instead of an unavailable corpus", async (t) => {
+  const { post } = await fixture(t, async () => { throw new Error("must not call provider") }, {
+    timeoutMs: 20,
+    knowledge: { search(_question, signal) {
+      return new Promise((_resolve, reject) => signal?.addEventListener("abort", () => reject(new Error("cancelled lookup")), { once: true }))
+    } },
+  })
+  const response = await post()
+  assert.equal(response.status, 504)
+  assert.deepEqual(await response.json(), { error: "request_timeout" })
+})
+
+test("capacity rejection advertises a short retry and does not charge a quota attempt", async (t) => {
+  let release!: () => void
+  let started!: () => void
+  const entered = new Promise<void>((resolve) => { started = resolve })
+  const pending = new Promise<void>((resolve) => { release = resolve })
+  const { post } = await fixture(t, async () => {
+    started()
+    await pending
+    return Response.json(completed)
+  }, { maxConcurrentRequests: 1, requestsPerMinute: 2 })
+  t.after(release)
+  const first = post()
+  await entered
+  const busy = await post()
+  release()
+  assert.equal((await first).status, 200)
+  assert.equal(busy.status, 429)
+  assert.equal(busy.headers.get("Retry-After"), "1")
+  assert.equal(busy.headers.get("Access-Control-Expose-Headers"), "Retry-After")
+  assert.equal((await post()).status, 200)
+})
+
+test("rate limiting advertises the remaining window and accepts the next window", async (t) => {
+  let now = Date.now()
+  t.mock.method(Date, "now", () => now)
+  const { post } = await fixture(t, async () => Response.json(completed), { requestsPerMinute: 1 })
+  assert.equal((await post()).status, 200)
+  now += 59_001
+  const limited = await post()
+  assert.equal(limited.status, 429)
+  assert.equal(limited.headers.get("Retry-After"), "1")
+  now += 1000
+  assert.equal((await post()).status, 200)
+})
+
+test("a disconnected client cancels upstream work and releases capacity immediately", { timeout: 2000 }, async (t) => {
+  let started!: () => void
+  let cancelled!: () => void
+  const entered = new Promise<void>((resolve) => { started = resolve })
+  const aborted = new Promise<void>((resolve) => { cancelled = resolve })
+  const { url, post } = await fixture(t, async (_url, init) => {
+    init?.signal?.addEventListener("abort", cancelled, { once: true })
+    started()
+    // A non-cooperative adapter may finish late, but it must not occupy the public slot.
+    await new Promise((resolve) => setTimeout(resolve, 150))
+    return Response.json(completed)
+  }, { maxConcurrentRequests: 1, timeoutMs: 1000 })
+  const controller = new AbortController()
+  const first = fetch(url, { method: "POST", headers: { Origin: origin, "Content-Type": "application/json" },
+    body: JSON.stringify({ messages }), signal: controller.signal })
+  const stopped = assert.rejects(first, (error: unknown) => error instanceof Error && error.name === "AbortError")
+  await entered
+  controller.abort()
+  await Promise.all([stopped, aborted])
+  assert.equal((await post({ messages: [{ role: "user", content: "καλησπέρα" }] })).status, 200)
+})
+
+test("provider rate limits preserve known retry delays without inventing a minute of waiting", async (t) => {
+  const now = Date.parse("2026-10-04T12:00:00Z")
+  t.mock.method(Date, "now", () => now)
+  for (const [header, expected] of [
+    ["3", "3"], ["0", "0"], [new Date(now + 15_000).toUTCString(), "15"],
+    [null, null], ["private upstream diagnostic", null], ["-1", null], ["86401", null],
+  ]) {
+    const { post } = await fixture(t, async () => Response.json({ error: "private upstream body" }, {
+      status: 429, headers: header === null ? {} : { "Retry-After": header },
+    }))
+    const response = await post()
+    assert.equal(response.status, 429)
+    assert.equal(response.headers.get("Retry-After"), expected)
+    assert.deepEqual(await response.json(), { error: "provider_unavailable" })
   }
 })

@@ -7,10 +7,12 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "typecheck": "tsc --noEmit",
     "themis:api": "tsx --env-file-if-exists=.env.themis api/themis/server.ts",
     "themis:dev": "tsx api/themis/dev.ts",
     "themis:preview": "tsx api/themis/preview.ts",
     "test:themis": "tsx --test api/themis/*.test.ts",
+    "themis:check": "tsx api/themis/check.ts",
     "themis:knowledge": "tsx --env-file-if-exists=.env.themis api/themis/knowledge-cli.ts",
     "themis:drive": "tsx --env-file-if-exists=.env.themis api/themis/drive-cli.ts"
   },

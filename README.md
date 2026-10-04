@@ -76,7 +76,7 @@ npm run themis:knowledge -- import approved-knowledge.json
 npm run themis:knowledge -- remove faq:services
 ```
 
-The initial database contains only published firm information, services, team, locations, and the absence of unpublished contact details. Legal reference documents and additional FAQs must be reviewed and imported separately. The import command accepts a JSON array of records, for example:
+The initial database contains only published firm information, services, team, locations, and the contact details shown in the website footer. Phone, email, and address are generated from the same content as the website; unpublished office hours and booking details are not inferred. Legal reference documents and additional FAQs must be reviewed and imported separately. The import command accepts a JSON array of records, for example:
 
 ```json
 [
@@ -96,7 +96,7 @@ The initial database contains only published firm information, services, team, l
 
 Each source URL should point to the actual approved public document. Draft records use `approved: false`; outdated records can have an `expiresAt` timestamp or be removed. IDs beginning with `website:` or `drive:` are reserved. Imports validate all records before writing and commit together. The local import command imports text; it does not extract PDF/Word content or provide an administration interface.
 
-Set `THEMIS_DATABASE_PATH` in the private backend environment to change the database location. Keep it on a persistent disk, outside the website's `public` directory, and back it up. The database and its SQLite sidecar files are excluded from Git. It stores knowledge documents, not visitor messages. Web responses are never automatically promoted into approved knowledge.
+Set `THEMIS_DATABASE_PATH` in the private backend environment to change the database location. Keep it on a persistent disk, outside the website's `public` directory, and back it up. The database and its SQLite sidecar files are excluded from Git. It stores knowledge documents, not visitor messages. Web responses are never automatically promoted into approved knowledge. Retrieved local documents are checked before and after generation, so changed, withdrawn, or expired evidence cannot authorize a late answer.
 
 ### Approved Google Drive documents
 
@@ -194,15 +194,28 @@ After Render reports the service as live, verify its HTTPS address against the w
 
 This free configuration is for the initial test using website knowledge only. [Render's free service](https://render.com/docs/free) sleeps after 15 minutes of inactivity and can take about a minute to wake up. Its local SQLite data is lost on restart or redeploy; approved website content is recreated at startup. Keep Drive and manual knowledge imports disabled on this test host. Before adding those documents or publishing for regular use, move the database and catalogue to durable storage; Render requires a paid service for a [persistent disk](https://render.com/docs/disks). Model/API usage remains separate from hosting.
 
-The API applies body/history limits, a 60-second total answer timeout, four concurrent requests, and 12 requests per minute per socket address. It does not trust forwarded IP headers. Behind a proxy, enforce visitor rate limits and spend controls at the trusted gateway; the built-in limit will otherwise apply to the proxy address. Origin checks are browser CORS protection, not authentication, and cannot prevent scripted callers from forging an Origin header.
+The API applies body/history limits, a 60-second total request timeout covering body upload, retrieval, and generation, four concurrent requests, and 12 requests per minute per socket address. A cancelled or timed-out request releases its capacity even if an adapter fails to settle; no further provider stage starts after cancellation. Quota responses expose the remaining retry window to the browser, while temporary capacity limits suggest a one-second retry. Upstream retry hints are passed through only when provided and valid. It does not trust forwarded IP headers. Behind a proxy, enforce visitor rate limits and spend controls at the trusted gateway; the built-in limit will otherwise apply to the proxy address. Origin checks are browser CORS protection, not authentication, and cannot prevent scripted callers from forging an Origin header.
+
+The chat offers **Διακοπή αναμονής** and allows starting a new conversation during an active request. Stopping restores the exact draft; resetting clears the conversation and cancels the old request. Late responses cannot replace a newer conversation. The waiting text changes after 12 and 30 seconds without claiming an unverified cause, and the 75-second browser deadline covers the response body as well as the initial connection. Failed POST requests are never automatically retried.
 
 The application does not write transcripts to disk or browser storage. The panel holds the conversation in page memory until a new chat or reload. Sources on this website use internal navigation and close the panel so the visitor can read the source; reopening THEMIS on that page restores the same conversation. External sources open in another tab while the original conversation remains in its tab. Each request sends at most the last nine exchanges and the current question, within a character budget. OpenAI requests use `store: false` to disable response storage; this does not establish zero provider retention ([OpenAI data controls](https://developers.openai.com/api/docs/guides/your-data)).
 
 ### Verification
 
+Run an explicit transport and latency check after deployment:
+
+```bash
+npm run themis:check -- --url https://themis-api-test.onrender.com/api/themis --origin https://kl1me.github.io
+# Optional: also make one provider-backed public website question.
+npm run themis:check -- --url https://themis-api-test.onrender.com/api/themis --origin https://kl1me.github.io --question 'Ποιους τομείς δικαίου καλύπτει η εταιρεία;'
+```
+
+This reports health, CORS preflight, greeting, and optional question status/timing separately, with a nonzero exit code on failure. It reads no private key, prints no question or answer text, performs no automatic retries, and does not keep the host awake periodically. Greeting checks do not call OpenAI; the optional factual question can incur provider usage. A slow initial health check suggests host startup or network delay, while the factual question's time includes retrieval and provider work. The check does not measure the visitor's full browser rendering time.
+
 ```bash
 npm run test:themis
 npm run lint
+npm run typecheck
 GITHUB_PAGES=true npm run build
 ```
 

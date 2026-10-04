@@ -12,6 +12,9 @@ const require = createRequire(resolve("package.json"))
 
 function sampleReply(question: string) {
   const text = question.normalize("NFD").replace(/\p{M}/gu, "").toLowerCase()
+  if (/επικοιν|ραντεβου|τηλεφων|email|διευθυν|contact|phone|address/.test(text)) {
+    return websiteKnowledge().find((document) => document.id === "website:contact")!.content
+  }
   if (/τομ|υπηρεσ|υποστηρ/.test(text)) {
     return `Η εταιρεία μας παρέχει νομική υποστήριξη στους ακόλουθους τομείς:\n\n${practiceAreas.map((area) => `• ${area.title}`).join("\n")}\n\nΜπορείτε να δείτε αναλυτικά τις υπηρεσίες μας στη σελίδα «Τομείς».`
   }
@@ -20,9 +23,6 @@ function sampleReply(question: string) {
   }
   if (/που|γραφει|καλαματ|αθην/.test(text)) {
     return `Η εταιρεία δραστηριοποιείται στην Καλαμάτα και την Αθήνα.\n\n${pages.team.profile.summary[0]}\n\nΠαρέχουμε νομική υποστήριξη σε φυσικά και νομικά πρόσωπα, επιχειρήσεις και οργανισμούς.`
-  }
-  if (/επικοιν|ραντεβου|τηλεφων/.test(text)) {
-    return "Τα στοιχεία τηλεφωνικής επικοινωνίας, email και κρατήσεων δεν έχουν ακόμη δημοσιευθεί στον ιστότοπο. Μπορείτε να γνωρίσετε την ομάδα και το δημοσιευμένο επαγγελματικό προφίλ στη σελίδα «Η ομάδα μας»."
   }
   return "Αυτή είναι μια ενδεικτική συνομιλία με τη THEMIS. Δοκιμάστε μια ερώτηση για τους τομείς εξειδίκευσης, την ομάδα ή την παρουσία μας στην Καλαμάτα και την Αθήνα. Οι απαντήσεις εδώ είναι έτοιμα παραδείγματα."
 }

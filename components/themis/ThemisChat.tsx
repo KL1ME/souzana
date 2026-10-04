@@ -6,7 +6,7 @@ import { ArrowRight, ArrowUp, ArrowUpRight, LoaderCircle, RotateCcw, X } from "l
 import { useEffect, useLayoutEffect, useRef, useState, type FormEvent, type KeyboardEvent } from "react"
 import { cn } from "@/lib/utils"
 import { themis, THEMIS_MAX_CONVERSATION_LENGTH, THEMIS_MAX_HISTORY, THEMIS_MAX_MESSAGE_LENGTH, type ThemisMessage } from "@/lib/themis"
-import { requestThemisAnswer, warmThemisApi } from "@/lib/themis-client"
+import { requestThemisAnswer, warmThemisApi, ThemisRequestError } from "@/lib/themis-client"
 import { internalThemisSourceHref } from "@/lib/themis-links"
 import { trackThemisViewport } from "@/lib/themis-viewport"
 import { site } from "@/lib/content"
@@ -14,6 +14,7 @@ import { site } from "@/lib/content"
 const endpoint = process.env.NEXT_PUBLIC_THEMIS_API_URL?.trim()
 const preview = process.env.NODE_ENV === "development" && process.env.NEXT_PUBLIC_THEMIS_PREVIEW === "true"
 const invitationDismissedKey = "souzana-themis-invitation-dismissed"
+type PendingRequest = { controller: AbortController; previousMessages: ThemisMessage[]; draft: string }
 
 function replyContent(message: ThemisMessage, openInternalSource: () => void) {
   const parts = []
@@ -44,6 +45,7 @@ export default function ThemisChat() {
   const [messages, setMessages] = useState<ThemisMessage[]>([])
   const [draft, setDraft] = useState("")
   const [sending, setSending] = useState(false)
+  const [waitStage, setWaitStage] = useState<"waiting" | "slow" | "long">("waiting")
   const [error, setError] = useState("")
   const [showInvitation, setShowInvitation] = useState(false)
   const [panel, setPanel] = useState<HTMLDivElement | null>(null)
@@ -51,10 +53,23 @@ export default function ThemisChat() {
   const invitationTimerRef = useRef<number | null>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
   const conversationRef = useRef<HTMLDivElement>(null)
-  const requestRef = useRef<AbortController | null>(null)
+  const requestRef = useRef<PendingRequest | null>(null)
   const warmupAtRef = useRef<number | null>(null)
 
-  useEffect(() => () => requestRef.current?.abort(), [])
+  useEffect(() => () => requestRef.current?.controller.abort(), [])
+
+  useEffect(() => {
+    if (!sending) {
+      inputRef.current?.focus()
+      return
+    }
+    const slow = window.setTimeout(() => setWaitStage("slow"), 12_000)
+    const long = window.setTimeout(() => setWaitStage("long"), 30_000)
+    return () => {
+      window.clearTimeout(slow)
+      window.clearTimeout(long)
+    }
+  }, [sending])
 
   useLayoutEffect(() => {
     if (open && panel) return trackThemisViewport(panel, conversationRef.current)
@@ -110,7 +125,7 @@ export default function ThemisChat() {
     if (open && conversationRef.current) {
       conversationRef.current.scrollTop = messages.length || sending || error ? conversationRef.current.scrollHeight : 0
     }
-  }, [messages, sending, error, open])
+  }, [messages, sending, error, open, waitStage])
 
   async function sendMessage(content: string) {
     const text = content.trim()
@@ -124,28 +139,33 @@ export default function ThemisChat() {
       history.splice(0, 2)
     }
     const controller = new AbortController()
-    requestRef.current = controller
+    const request: PendingRequest = { controller, previousMessages: messages, draft: content }
+    requestRef.current = request
     setMessages([...messages, { role: "user", content: text }])
     setDraft("")
     setError("")
+    setWaitStage("waiting")
     setSending(true)
 
     try {
       const result = await requestThemisAnswer(endpoint, history, controller.signal)
+      if (requestRef.current !== request || controller.signal.aborted) return
       setMessages([...messages, { role: "user", content: text }, { role: "assistant", content: result.reply, sources: result.sources, citations: result.citations }])
     } catch (failure) {
-      if (controller.signal.aborted) return
+      if (requestRef.current !== request || controller.signal.aborted) return
       setMessages(messages)
-      setDraft(text)
+      setDraft(request.draft)
       setError(failure instanceof Error && failure.message === "busy"
-        ? "Η THEMIS δέχεται αρκετά μηνύματα αυτή τη στιγμή. Δοκιμάστε ξανά σε λίγο."
+        ? failure instanceof ThemisRequestError && failure.retryAfterSeconds
+          ? `Η THEMIS δέχεται αρκετά μηνύματα αυτή τη στιγμή. Δοκιμάστε ξανά σε ${failure.retryAfterSeconds} ${failure.retryAfterSeconds === 1 ? "δευτερόλεπτο" : "δευτερόλεπτα"}.`
+          : "Η THEMIS δέχεται αρκετά μηνύματα αυτή τη στιγμή. Δοκιμάστε ξανά."
         : failure instanceof Error && (failure.message === "timeout" || failure.name === "TimeoutError")
           ? "Η απάντηση άργησε περισσότερο από το αναμενόμενο. Το μήνυμά σας παραμένει εδώ για να δοκιμάσετε ξανά."
         : failure instanceof Error && failure.message === "not_configured"
           ? "Η THEMIS δεν έχει ενεργοποιηθεί ακόμη. Το μήνυμά σας παραμένει εδώ για να δοκιμάσετε ξανά μόλις ολοκληρωθεί η σύνδεση."
         : "Η αποστολή δεν ολοκληρώθηκε. Το μήνυμά σας παραμένει εδώ για να δοκιμάσετε ξανά.")
     } finally {
-      if (requestRef.current === controller) {
+      if (requestRef.current === request) {
         requestRef.current = null
         setSending(false)
       }
@@ -165,10 +185,25 @@ export default function ThemisChat() {
   }
 
   function reset() {
+    const request = requestRef.current
+    requestRef.current = null
+    request?.controller.abort()
+    setSending(false)
     setMessages([])
     setDraft("")
     setError("")
     inputRef.current?.focus()
+  }
+
+  function stopWaiting() {
+    const request = requestRef.current
+    if (!request) return
+    requestRef.current = null
+    request.controller.abort()
+    setMessages(request.previousMessages)
+    setDraft(request.draft)
+    setSending(false)
+    setError("Η αναμονή σταμάτησε. Το μήνυμά σας παραμένει εδώ για να το στείλετε ξανά όταν θελήσετε.")
   }
 
   return (
@@ -235,7 +270,7 @@ export default function ThemisChat() {
               <Dialog.Description className="mt-1 text-[11px] text-[#6d685e]">{themis.subtitle}</Dialog.Description>
               {preview && <p className="mt-1 text-[10px]">Ενδεικτική προεπισκόπηση</p>}
             </div>
-            <button type="button" onClick={reset} disabled={sending || !messages.length}
+            <button type="button" onClick={reset} disabled={!messages.length && !draft && !error && !sending}
               className="flex size-11 items-center justify-center rounded-lg transition-colors hover:bg-accent/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent disabled:opacity-30"
               aria-label="Νέα συνομιλία">
               <RotateCcw className="size-4 text-[#806321]" aria-hidden="true" />
@@ -278,7 +313,20 @@ export default function ThemisChat() {
                 </div>
               ))}
             </div>
-            {sending && <p role="status" className="mt-4 flex items-center gap-2 text-xs"><LoaderCircle className="size-4 animate-spin text-[#806321]" aria-hidden="true" />Η THEMIS ετοιμάζει την απάντησή σας…</p>}
+            {sending && (
+              <div className="mt-4 space-y-2">
+                <p role="status" className="flex items-start gap-2 text-xs leading-relaxed">
+                  <LoaderCircle className="mt-0.5 size-4 shrink-0 animate-spin text-[#806321]" aria-hidden="true" />
+                  <span>{waitStage === "waiting" ? "Αναμονή απάντησης από τη THEMIS…"
+                    : waitStage === "slow" ? "Η απάντηση χρειάζεται περισσότερο χρόνο. Συνεχίζουμε να περιμένουμε τη THEMIS…"
+                    : "Η απάντηση καθυστερεί. Μπορείτε να διακόψετε την αναμονή· η ερώτησή σας θα παραμείνει στο πεδίο μηνύματος."}</span>
+                </p>
+                <button type="button" onClick={stopWaiting}
+                  className="min-h-10 rounded-md px-2 text-xs text-[#806321] underline underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent">
+                  Διακοπή αναμονής
+                </button>
+              </div>
+            )}
             {error && <p role="alert" className="mt-4 rounded-lg border border-accent/30 bg-white p-3 text-xs leading-relaxed">{error}</p>}
           </div>
 

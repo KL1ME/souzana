@@ -29,6 +29,8 @@ jobs:
         run: npm ci
       - name: Verify THEMIS backend
         run: npm run test:themis
+      - name: Lint
+        run: npm run lint
       - name: Build
         env:
           NEXT_PUBLIC_THEMIS_API_URL: ${{ vars.THEMIS_API_URL || 'https://themis-api-test.onrender.com/api/themis' }}

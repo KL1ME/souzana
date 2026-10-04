@@ -15,21 +15,36 @@ export type AnswerConfig = {
 }
 
 export class ProviderError extends Error {
-  constructor(public status: number, public code: string) { super(code) }
+  constructor(public status: number, public code: string, public retryAfterSeconds?: number) { super(code) }
 }
 
 function record(value: unknown): value is Record<string, unknown> {
   return value !== null && typeof value === "object" && !Array.isArray(value)
 }
 
+function providerRetryAfter(response: Response): number | undefined {
+  const header = response.headers.get("Retry-After")?.trim()
+  if (!header) return undefined
+  const seconds = /^\d+$/.test(header) ? Number(header) : Math.ceil((Date.parse(header) - Date.now()) / 1000)
+  return Number.isSafeInteger(seconds) && seconds >= 0 && seconds <= 86_400 ? seconds : undefined
+}
+
 async function callProvider(body: Record<string, unknown>, config: AnswerConfig, fetchImpl: typeof fetch, signal: AbortSignal) {
-  if (config.generateResponse) return config.generateResponse(body, signal)
+  signal.throwIfAborted()
+  if (config.generateResponse) {
+    const output = await config.generateResponse(body, signal)
+    signal.throwIfAborted()
+    return output
+  }
   const response = await fetchImpl("https://api.openai.com/v1/responses", {
     method: "POST", headers: { Authorization: `Bearer ${config.apiKey}`, "Content-Type": "application/json" },
     body: JSON.stringify({ model: config.model, max_output_tokens: 1600, store: false, ...body }), signal,
   })
-  if (!response.ok) throw new ProviderError(response.status === 429 ? 429 : 502, "provider_unavailable")
+  signal.throwIfAborted()
+  if (!response.ok) throw new ProviderError(response.status === 429 ? 429 : 502, "provider_unavailable",
+    response.status === 429 ? providerRetryAfter(response) : undefined)
   const result: unknown = await response.json()
+  signal.throwIfAborted()
   if (!record(result) || result.status !== "completed" || !Array.isArray(result.output)) throw new ProviderError(502, "invalid_provider_response")
   return result.output as unknown[]
 }
@@ -70,6 +85,7 @@ function databaseAnswer(answer: string, sources: ThemisSource[]): ThemisAnswer {
 }
 
 export async function answerQuestion(messages: ThemisMessage[], config: AnswerConfig, fetchImpl: typeof fetch, signal: AbortSignal): Promise<ThemisAnswer> {
+  signal.throwIfAborted()
   const question = messages.at(-1)!.content
   const conversation = conversationAnswer(question)
   if (conversation) return conversation
@@ -78,9 +94,11 @@ export async function answerQuestion(messages: ThemisMessage[], config: AnswerCo
   let excerpts
   try {
     excerpts = await config.knowledge.search(searchQuestion, signal)
+    signal.throwIfAborted()
     await config.knowledge.verify?.(excerpts, signal)
+    signal.throwIfAborted()
   }
-  catch { throw new ProviderError(503, "knowledge_unavailable") }
+  catch { signal.throwIfAborted(); throw new ProviderError(503, "knowledge_unavailable") }
   if (config.allowGeneralFallback) {
     const clock = clockAnswer(question)
     if (clock) return clock
@@ -97,8 +115,8 @@ export async function answerQuestion(messages: ThemisMessage[], config: AnswerCo
         required: ["answer_found", "answer", "citation_ids"],
       } } },
     }, config, fetchImpl, signal)
-    try { await config.knowledge.verify?.(excerpts, signal) }
-    catch { throw new ProviderError(503, "knowledge_unavailable") }
+    try { await config.knowledge.verify?.(excerpts, signal); signal.throwIfAborted() }
+    catch { signal.throwIfAborted(); throw new ProviderError(503, "knowledge_unavailable") }
     let decision: unknown
     try { decision = JSON.parse(outputText(output).reply) } catch { throw new ProviderError(502, "invalid_database_answer") }
     if (!record(decision) || typeof decision.answer_found !== "boolean" || typeof decision.answer !== "string" || !Array.isArray(decision.citation_ids) ||

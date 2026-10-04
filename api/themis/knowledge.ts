@@ -131,6 +131,23 @@ export class KnowledgeDatabase implements KnowledgeSearch {
     return rows as KnowledgeExcerpt[]
   }
 
+  verify(excerpts: KnowledgeExcerpt[], signal?: AbortSignal): void {
+    signal?.throwIfAborted()
+    const current = this.db.prepare(`SELECT 1 FROM documents d
+      WHERE d.id=? AND d.title=? AND d.source_url=? AND d.updated_at=?
+        AND d.approved=1 AND (d.expires_at IS NULL OR d.expires_at > ?)
+        AND instr(d.content,trim(?)) > 0`)
+    const now = new Date().toISOString()
+    for (const excerpt of excerpts) {
+      // Combined retrieval passes the Drive passages to their own catalogue verifier.
+      if (excerpt.id.startsWith("drive:")) continue
+      if (!excerpt.content.trim() || !current.get(excerpt.id, excerpt.title, excerpt.sourceUrl, excerpt.updatedAt, now, excerpt.content)) {
+        throw new Error("A retrieved local document was withdrawn, expired, or changed before answering.")
+      }
+    }
+    signal?.throwIfAborted()
+  }
+
   list() {
     return this.db.prepare("SELECT id,title,approved,origin,updated_at AS updatedAt,expires_at AS expiresAt FROM documents ORDER BY id").all()
   }

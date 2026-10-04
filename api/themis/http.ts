@@ -45,31 +45,62 @@ function validateMessages(body: unknown): ThemisMessage[] {
   return messages
 }
 
-function readJson(request: IncomingMessage): Promise<unknown> {
+function readJson(request: IncomingMessage, signal: AbortSignal): Promise<unknown> {
   return new Promise((resolve, reject) => {
     let size = 0
-    let overflow = false
+    let settled = false
     const chunks: Buffer[] = []
-    request.on("data", (chunk: Buffer) => {
+    const finish = (failure?: unknown, value?: unknown) => {
+      if (settled) return
+      settled = true
+      request.removeListener("data", data)
+      request.removeListener("end", end)
+      request.removeListener("aborted", invalid)
+      signal.removeEventListener("abort", cancel)
+      chunks.length = 0
+      if (failure) { reject(failure); request.resume() }
+      else resolve(value)
+    }
+    const data = (chunk: Buffer) => {
       size += chunk.length
-      if (size > MAX_BODY_BYTES) {
-        if (!overflow) {
-          overflow = true
-          chunks.length = 0
-          reject(new HttpError(413, "body_too_large"))
-        }
-      } else if (!overflow) chunks.push(chunk)
-    })
-    request.on("end", () => {
-      if (overflow) return
+      if (size > MAX_BODY_BYTES) finish(new HttpError(413, "body_too_large"))
+      else chunks.push(chunk)
+    }
+    const end = () => {
       try {
-        resolve(JSON.parse(Buffer.concat(chunks).toString("utf8")))
+        finish(undefined, JSON.parse(Buffer.concat(chunks).toString("utf8")))
       } catch {
-        reject(new HttpError(400, "invalid_json"))
+        finish(new HttpError(400, "invalid_json"))
       }
+    }
+    const invalid = () => finish(new HttpError(400, "invalid_request"))
+    const cancel = () => finish(signal.reason)
+    request.on("data", data)
+    request.once("end", end)
+    // Keep an error listener for a later socket failure while a rejected body drains.
+    request.once("error", invalid)
+    request.once("aborted", invalid)
+    signal.addEventListener("abort", cancel, { once: true })
+    if (signal.aborted) cancel()
+  })
+}
+
+/** Bound the response even when an injected retrieval/provider adapter ignores cancellation. */
+function withCancellation<T>(operation: () => Promise<T>, signal: AbortSignal): Promise<T> {
+  signal.throwIfAborted()
+  return new Promise((resolve, reject) => {
+    const cancel = () => { signal.removeEventListener("abort", cancel); reject(signal.reason) }
+    signal.addEventListener("abort", cancel, { once: true })
+    Promise.resolve().then(() => {
+      signal.throwIfAborted()
+      return operation()
+    }).then((value) => {
+      signal.removeEventListener("abort", cancel)
+      resolve(value)
+    }, (failure) => {
+      signal.removeEventListener("abort", cancel)
+      reject(failure)
     })
-    request.on("error", () => reject(new HttpError(400, "invalid_request")))
-    request.on("aborted", () => reject(new HttpError(400, "invalid_request")))
   })
 }
 
@@ -118,6 +149,7 @@ export function createThemisServer(config: ThemisConfig, fetchImpl: typeof fetch
     response.setHeader("Access-Control-Allow-Origin", origin)
     response.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS")
     response.setHeader("Access-Control-Allow-Headers", "Content-Type")
+    response.setHeader("Access-Control-Expose-Headers", "Retry-After")
     if (request.method === "OPTIONS") {
       response.writeHead(204)
       response.end()
@@ -134,8 +166,9 @@ export function createThemisServer(config: ThemisConfig, fetchImpl: typeof fetch
     for (const [key, client] of clients) if (client.expires <= now) clients.delete(key)
     const address = request.socket.remoteAddress ?? "unknown"
     const client = clients.get(address) ?? { count: 0, expires: now + 60_000 }
-    if (client.count >= perMinute || active >= maxConcurrent || (clients.size >= 10_000 && !clients.has(address))) {
-      response.setHeader("Retry-After", "60")
+    const quotaLimited = client.count >= perMinute
+    if (quotaLimited || active >= maxConcurrent || (clients.size >= 10_000 && !clients.has(address))) {
+      response.setHeader("Retry-After", String(quotaLimited ? Math.max(1, Math.ceil((client.expires - now) / 1000)) : 1))
       respond(response, 429, { error: "rate_limited" })
       return
     }
@@ -161,13 +194,17 @@ export function createThemisServer(config: ThemisConfig, fetchImpl: typeof fetch
     timer.unref()
     response.on("close", () => controller.abort())
     try {
-      const messages = validateMessages(await readJson(request))
-      const answer = await answerQuestion(messages, config, fetchImpl, controller.signal)
+      const answer = await withCancellation(async () => {
+        const messages = validateMessages(await readJson(request, controller.signal))
+        return answerQuestion(messages, config, fetchImpl, controller.signal)
+      }, controller.signal)
       respond(response, 200, answer)
     } catch (failure) {
-      const status = failure instanceof HttpError || failure instanceof ProviderError ? failure.status : controller.signal.aborted ? 504 : 502
-      const code = failure instanceof HttpError || failure instanceof ProviderError ? failure.code : controller.signal.aborted ? "request_timeout" : "provider_unavailable"
-      if (status === 429) response.setHeader("Retry-After", "60")
+      const status = controller.signal.aborted ? 504 : failure instanceof HttpError || failure instanceof ProviderError ? failure.status : 502
+      const code = controller.signal.aborted ? "request_timeout" : failure instanceof HttpError || failure instanceof ProviderError ? failure.code : "provider_unavailable"
+      if (status === 429 && failure instanceof ProviderError && failure.retryAfterSeconds !== undefined) {
+        response.setHeader("Retry-After", String(failure.retryAfterSeconds))
+      }
       respond(response, status, { error: code })
     } finally {
       clearTimeout(timer)

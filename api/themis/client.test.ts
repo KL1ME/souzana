@@ -1,6 +1,6 @@
 import assert from "node:assert/strict"
 import { test } from "node:test"
-import { requestThemisAnswer, warmThemisApi } from "../../lib/themis-client"
+import { requestThemisAnswer, warmThemisApi, ThemisRequestError } from "../../lib/themis-client"
 
 const messages = [{ role: "user" as const, content: "Πού έχετε γραφεία;" }]
 const answer = { reply: "Καλαμάτα και Αθήνα. [1]", source: "database", sources: [{ id: "website:locations", title: "Γραφεία", url: "https://example.com/team/" }], citations: [{ start: 19, end: 22, sourceIndex: 0 }] }
@@ -99,4 +99,47 @@ test("requests time out and can be cancelled without depending on AbortSignal.an
   const pending = requestThemisAnswer("/api/themis", messages, cancelled.signal, transport)
   cancelled.abort()
   await assert.rejects(pending, { name: "AbortError" })
+})
+
+test("an already-cancelled draft is never submitted", async () => {
+  const cancelled = new AbortController()
+  cancelled.abort()
+  let calls = 0
+  await assert.rejects(requestThemisAnswer("/api/themis", messages, cancelled.signal, async () => {
+    calls++
+    return Response.json(answer)
+  }), { name: "AbortError" })
+  assert.equal(calls, 0)
+})
+
+test("a stalled response body is bounded by the timeout without retrying the POST", async () => {
+  let calls = 0
+  const stalled: typeof fetch = async () => {
+    calls++
+    return new Response(new ReadableStream({ start() { /* Simulate headers arriving with a stalled body. */ } }), {
+      headers: { "Content-Type": "application/json" },
+    })
+  }
+  await assert.rejects(requestThemisAnswer("/api/themis", messages, new AbortController().signal, stalled, 5), { message: "timeout" })
+  assert.equal(calls, 1)
+})
+
+test("cancellation discards a late answer even when a transport ignores abort", async () => {
+  const cancelled = new AbortController()
+  let complete: (response: Response) => void = () => undefined
+  const pending = requestThemisAnswer("/api/themis", messages, cancelled.signal, async () => new Promise((resolve) => { complete = resolve }))
+  cancelled.abort()
+  await assert.rejects(pending, { name: "AbortError" })
+  complete(Response.json(answer))
+})
+
+test("busy errors preserve a bounded server retry delay and never retry automatically", async () => {
+  for (const [header, expected] of [["1", 1], ["38", 38], ["0", 0], ["-5", undefined], ["Infinity", undefined], ["10000000000000000", undefined], ["private-data", undefined]] as const) {
+    let calls = 0
+    await assert.rejects(requestThemisAnswer("/api/themis", messages, new AbortController().signal, async () => {
+      calls++
+      return Response.json({}, { status: 429, headers: { "Retry-After": header } })
+    }), (error: unknown) => error instanceof ThemisRequestError && error.message === "busy" && error.retryAfterSeconds === expected)
+    assert.equal(calls, 1)
+  }
 })

@@ -265,3 +265,63 @@ test("browser contract rejects unsafe links, missing sources, invalid offsets, a
     { ...answer, citations: [...answer.citations, { start: 9, end: 12, sourceIndex: 0 }] },
   ]) assert.equal(parseThemisAnswer(invalid), null)
 })
+
+test("a request cancelled before work begins performs no retrieval or conversation reply", async (t) => {
+  const controller = new AbortController()
+  const reason = new Error("cancelled by client")
+  controller.abort(reason)
+  const base = config(t, { knowledge: { search() { throw new Error("must not retrieve") } } })
+  for (const content of ["καλησπέρα", messages[0].content]) {
+    await assert.rejects(answerQuestion([{ role: "user", content }], base, async () => {
+      throw new Error("must not call provider")
+    }, controller.signal), (error) => error === reason)
+  }
+})
+
+test("cancellation during retrieval skips evidence verification and generation", async (t) => {
+  const controller = new AbortController()
+  const reason = new Error("cancelled during lookup")
+  const base = config(t)
+  let verified = false
+  let generated = false
+  await assert.rejects(answerQuestion(messages, { ...base, knowledge: {
+    async search(question) {
+      controller.abort(reason)
+      return base.knowledge.search(question)
+    },
+    verify() { verified = true },
+  } }, async () => { generated = true; return response(decision) }, controller.signal), (error) => error === reason)
+  assert.equal(verified, false)
+  assert.equal(generated, false)
+})
+
+test("a cancelled database generator cannot start a web or general fallback", async (t) => {
+  const controller = new AbortController()
+  const reason = new Error("cancelled during generation")
+  let calls = 0
+  let verified = 0
+  const base = config(t, { allowGeneralFallback: true })
+  await assert.rejects(answerQuestion(messages, { ...base,
+    knowledge: { search: base.knowledge.search.bind(base.knowledge), verify() { verified++ } },
+    generateResponse: async () => {
+      calls++
+      controller.abort(reason)
+      return [{ type: "message", role: "assistant", content: [{ type: "output_text", text: JSON.stringify(decline) }] }]
+    },
+  }, async () => { throw new Error("must not use remote provider") }, controller.signal), (error) => error === reason)
+  assert.equal(calls, 1)
+  assert.equal(verified, 1)
+})
+
+test("a real approved document withdrawn during generation cannot become a cited answer", async (t) => {
+  const base = config(t)
+  assert.ok(base.knowledge instanceof KnowledgeDatabase)
+  const knowledge = base.knowledge
+  let calls = 0
+  await assert.rejects(answerQuestion(messages, base, async () => {
+    calls++
+    knowledge.remove("faq:location")
+    return response(decision)
+  }, new AbortController().signal), (error: unknown) => error instanceof ProviderError && error.status === 503 && error.code === "knowledge_unavailable")
+  assert.equal(calls, 1)
+})

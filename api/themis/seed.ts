@@ -12,6 +12,13 @@ export function websiteKnowledge(): KnowledgeDocument[] {
     document("services", "Τομείς εξειδίκευσης", `${pages.practice.description}\n${practiceAreas.map((area) => area.title).join("\n")}`, "/practice-areas/", ["τομείς", "ειδίκευση", "υπηρεσίες", "υποστήριξη", "services", "practice", "expertise"]),
     ...practiceAreas.map((area) => document(`practice:${area.slug}`, area.title, [...new Set([area.shortDescription, ...area.details, ...area.bullets])].join("\n\n"), `/practice-areas/#${area.slug}`, [area.slug])),
     document("team", "Η ομάδα μας", `${pages.team.profile.title} — ${pages.team.profile.role}\n${pages.team.profile.summary.join("\n")}\n${teamMembers.map((member) => `${member.name} — ${member.title}\n${member.bullets.join("\n")}`).join("\n\n")}`, "/team/", ["ομάδα", "δικηγόροι", "team", "lawyers", "partners"]),
-    document("contact", "Στοιχεία επικοινωνίας", "Ο ιστότοπος δεν δημοσιεύει τηλέφωνο, email, διευθύνσεις γραφείων, ωράριο ή τρόπο κράτησης ραντεβού. Στη σελίδα της ομάδας υπάρχει το επαγγελματικό προφίλ LinkedIn της Σουζάνας Ι. Κλημεντίδη: " + pages.team.profile.links.map((link) => link.href).join(" "), "/team/", ["επικοινωνία", "τηλέφωνο", "ραντεβού", "contact", "phone", "email", "appointment"]),
+    document("contact", "Στοιχεία επικοινωνίας", [
+      `Για επικοινωνία με την ${site.shortName}:`,
+      `Τηλέφωνα: ${site.footer.phones.map((phone) => phone.label).join(", ")}.`,
+      `Email: ${site.footer.email}.`,
+      `Διεύθυνση γραφείου στην Αθήνα: ${site.footer.address.label}.`,
+      "Ο ιστότοπος δεν δημοσιεύει ωράριο ή τρόπο κράτησης ραντεβού.",
+      "Στη σελίδα της ομάδας υπάρχει το επαγγελματικό προφίλ LinkedIn της Σουζάνας Ι. Κλημεντίδη: " + pages.team.profile.links.map((link) => link.href).join(" "),
+    ].join("\n"), "/", ["επικοινωνία", "επικοινωνήσω", "επικοινωνούμε", "τηλέφωνο", "διεύθυνση", "ραντεβού", "contact", "reach", "phone", "telephone", "email", "address", "appointment"]),
   ]
 }
