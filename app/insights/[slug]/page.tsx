@@ -6,7 +6,8 @@ import Container from "@/components/layout/Container"
 import { Card } from "@/components/ui/card"
 import Prose from "@/components/typography/Prose"
 import { pages, posts, site } from "@/lib/content"
-import { formatDate, slugify } from "@/lib/format"
+import { estimateReadingTime, formatDate, slugify } from "@/lib/format"
+import { ExternalLink } from "lucide-react"
 
 const buildToc = (content: typeof posts[number]["content"]) =>
   content
@@ -47,7 +48,9 @@ export async function generateMetadata({
       title: post.title,
       description: post.excerpt,
       url: `${site.url}/insights/${post.slug}/`,
-      publishedTime: post.date,
+      publishedTime: post.dateLabel ? undefined : post.date,
+      modifiedTime: post.dateLabel ? post.date : undefined,
+      authors: post.author ? [post.author] : undefined,
       images: [{ url: imageUrl, alt: post.image.alt }],
     },
     twitter: {
@@ -80,8 +83,10 @@ export default async function InsightDetail({ params }: { params: Promise<{ slug
             <h1 className="font-serif text-[2rem] font-semibold leading-[1.08] tracking-tight text-foreground sm:text-4xl">
               {post.title}
             </h1>
-            <div className="text-sm text-muted-foreground">
-              {formatDate(post.date)}
+            <div className="flex flex-wrap gap-x-5 gap-y-2 text-sm text-muted-foreground">
+              <span>{post.dateLabel ?? formatDate(post.date)}</span>
+              <span>{estimateReadingTime(post.content)}</span>
+              {post.author ? <span>{post.author}</span> : null}
             </div>
             <p className="text-base text-muted-foreground max-w-2xl">
               {post.excerpt}
@@ -127,6 +132,31 @@ export default async function InsightDetail({ params }: { params: Promise<{ slug
                 return null
               })}
             </Prose>
+            {post.sources?.length ? (
+              <section className="mt-12 space-y-4 border-t border-border/60 pt-8" aria-labelledby="article-sources">
+                <h2 id="article-sources" className="font-serif text-2xl font-semibold">
+                  Πηγές και αναφορές
+                </h2>
+                <ul className="space-y-3 text-sm">
+                  {post.sources.map((source) => (
+                    <li key={source.href}>
+                      <a
+                        href={source.href}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex items-start gap-2 underline decoration-accent/60 underline-offset-4"
+                      >
+                        {source.label}
+                        <ExternalLink className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            ) : null}
+            {post.sourceNote ? (
+              <p className="mt-8 text-sm leading-relaxed text-muted-foreground">{post.sourceNote}</p>
+            ) : null}
             <p className="mt-10 text-sm text-muted-foreground">
               {pages.insights.note}
             </p>
@@ -159,7 +189,7 @@ export default async function InsightDetail({ params }: { params: Promise<{ slug
                   <Link
                     key={item.slug}
                     href={`/insights/${item.slug}`}
-                    className="text-foreground/80 underline decoration-accent/50 underline-offset-4 transition-colors hover:text-foreground"
+                    className="block text-foreground/80 underline decoration-accent/50 underline-offset-4 transition-colors hover:text-foreground"
                   >
                     {item.title}
                   </Link>

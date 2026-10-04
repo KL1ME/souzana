@@ -3,6 +3,7 @@ import Link from "next/link"
 import Container from "@/components/layout/Container"
 import SectionHeader from "@/components/layout/SectionHeader"
 import { Card } from "@/components/ui/card"
+import { Award, ExternalLink } from "lucide-react"
 import { pages, teamMembers } from "@/lib/content"
 import { createPageMetadata } from "@/lib/metadata"
 
@@ -37,10 +38,31 @@ export default function TeamPage() {
                 alt={profile.image.alt}
                 fill
                 loading="eager"
-                className="object-cover"
+                className="object-cover object-[50%_30%]"
                 sizes="(min-width: 1024px) 40vw, 90vw"
               />
             </div>
+            {profile.awards?.map((award) => (
+              <Card key={award.href} className="gap-4 border-accent/40 bg-[#faf7ef]">
+                <div className="flex items-center gap-3 text-accent">
+                  <Award className="size-6" aria-hidden="true" />
+                  <p className="text-xs font-semibold uppercase tracking-[0.2em]">
+                    Διάκριση {award.year}
+                  </p>
+                </div>
+                <h2 className="font-serif text-2xl font-semibold">{award.title}</h2>
+                <p className="text-sm text-muted-foreground">{award.category}</p>
+                <Link
+                  href={award.href}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-2 text-sm font-semibold underline decoration-accent/60 underline-offset-4"
+                >
+                  Η διάκριση στον επίσημο διοργανωτή
+                  <ExternalLink className="size-4 shrink-0" aria-hidden="true" />
+                </Link>
+              </Card>
+            ))}
           </div>
           <div className="space-y-6">
             <Card className="gap-4">
@@ -73,6 +95,11 @@ export default function TeamPage() {
                     </li>
                   ))}
                 </ul>
+                {profile.biography?.map((paragraph) => (
+                  <p key={paragraph} className="text-sm leading-relaxed text-muted-foreground">
+                    {paragraph}
+                  </p>
+                ))}
               </div>
             </Card>
             <div className="grid gap-6 md:grid-cols-3">

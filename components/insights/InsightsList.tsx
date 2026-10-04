@@ -20,17 +20,21 @@ export default function InsightsList() {
             />
           </div>
           <div className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-            {formatDate(post.date)}
+            {post.dateLabel ?? formatDate(post.date)}
           </div>
+          <p className="text-xs font-semibold text-accent">{post.category}</p>
           <div className="space-y-3">
             <h2 className="font-serif text-lg font-semibold tracking-tight text-foreground">
               {post.title}
             </h2>
             <p className="text-sm text-muted-foreground">{post.excerpt}</p>
+            {post.author ? (
+              <p className="text-xs text-muted-foreground">{post.author}</p>
+            ) : null}
           </div>
           <Link
             href={`/insights/${post.slug}`}
-            className="text-sm font-semibold text-foreground underline decoration-accent/60 underline-offset-4 transition-colors hover:decoration-accent"
+            className="mt-auto pt-2 text-sm font-semibold text-foreground underline decoration-accent/60 underline-offset-4 transition-colors hover:decoration-accent"
           >
             Διαβάστε
           </Link>

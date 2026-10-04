@@ -1,9 +1,13 @@
 import type { IconName } from "@/lib/icons"
 import { assetPath } from "@/lib/asset"
+import { driveMediaSections } from "@/lib/drive-media"
+import { drivePosts } from "@/lib/drive-posts"
 
 export type ContentImage = {
   src: string
   alt: string
+  fit?: "cover" | "contain"
+  position?: string
 }
 
 export type NavItem = {
@@ -37,6 +41,10 @@ export type Post = {
   title: string
   slug: string
   date: string
+  dateLabel?: string
+  author?: string
+  sourceNote?: string
+  sources?: { label: string; href: string }[]
   category: string
   excerpt: string
   image: ContentImage
@@ -46,10 +54,13 @@ export type Post = {
 export type MediaItem = {
   title: string
   outlet: string
-  date: string
-  format: "Συνέντευξη" | "Άρθρο" | "Βίντεο"
+  date?: string
+  dateLabel?: string
+  format: "Συνέντευξη" | "Άρθρο" | "Ρεπορτάζ" | "Βίντεο" | "Συνέδριο" | "Ομιλία" | "Διάκριση" | "Ηχητικό"
   href: string
   description: string
+  image?: ContentImage
+  linkLabel?: string
 }
 
 export type MediaSection = {
@@ -69,6 +80,8 @@ export type TeamProfile = {
   title: string
   role: string
   summary: string[]
+  biography?: string[]
+  awards?: { title: string; category: string; year: string; href: string }[]
   experience: ProfileEntry[]
   education: ProfileEntry[]
   languages: string[]
@@ -418,6 +431,7 @@ export const teamMembers: TeamMember[] = [
 ]
 
 export const posts: Post[] = [
+  ...drivePosts,
   {
     title: "Τι να προσέξετε πριν υπογράψετε μια σύμβαση",
     slug: "symvasi-prin-ypografi",
@@ -541,6 +555,18 @@ export const pages = {
         "Νομική σύμβουλος του Οικονομικού Επιμελητηρίου Ελλάδος.",
         "Συχνές παρεμβάσεις σε τηλεόραση και ραδιόφωνο.",
       ],
+      biography: [
+        "Η Σουζάνα Ι. Κλημεντίδη είναι διαχειρίστρια εταίρος της εταιρείας. Συνδυάζει την εμπειρία στο τραπεζικό, πτωχευτικό, εμπορικό και ναυτιλιακό δίκαιο με τη συμβουλευτική υποστήριξη επενδύσεων και χρηματοδοτήσεων, δίνοντας ιδιαίτερη έμφαση στην πρόληψη κινδύνων και την εξωδικαστική επίλυση διαφορών.",
+        "Η δραστηριότητά της περιλαμβάνει επίσης την προστασία θυμάτων ενδοοικογενειακής βίας και των δικαιωμάτων ανηλίκων. Μέσα από την αρθρογραφία, τις συνεντεύξεις και τις ομιλίες της, προσεγγίζει τόσο τις ανάγκες των επιχειρήσεων όσο και τα ζητήματα που επηρεάζουν την καθημερινότητα των οικογενειών.",
+      ],
+      awards: [
+        {
+          title: "Greek International Women Awards",
+          category: "Law and Political Sciences",
+          year: "2025",
+          href: "https://greekinternationalwomenawards.com/4th-giwa-winners/",
+        },
+      ],
       experience: [
         {
           title: "Κλημεντίδη – Τσιλιβαράκη και Συνεργάτες",
@@ -608,29 +634,30 @@ export const pages = {
         },
       ],
       image: {
-        src: assetPath("/images/team-1.jpg"),
-        alt: "Πορτρέτο της Σουζάνα Ι. Κλημεντίδη",
+        src: assetPath("/images/media/souzana-portrait.webp"),
+        alt: "Πορτρέτο της Σουζάνας Ι. Κλημεντίδη",
       },
     } satisfies TeamProfile,
   },
   insights: {
     eyebrow: "Άρθρα",
-    title: "Νομικά σημειώματα με πρακτική αξία",
-    description: "Σύντομες αναλύσεις για κρίσιμα νομικά ζητήματα.",
+    title: "Άρθρα με πρακτική αξία",
+    description: "Αναλύσεις για την οικογένεια, τα δικαιώματα των ανηλίκων και τη σύγχρονη επιχειρηματική δραστηριότητα.",
     note:
       "Το παρόν κείμενο είναι ενημερωτικό και δεν συνιστά νομική συμβουλή.",
     relatedLabel: "Σχετικά άρθρα",
   },
   media: {
     eyebrow: "Μέσα",
-    title: "Συνεντεύξεις & δημόσιες παρεμβάσεις",
-    description: "Επιλεγμένες εμφανίσεις και κείμενα σε τρίτα μέσα ενημέρωσης.",
-    note: "Οι σύνδεσμοι οδηγούν σε εξωτερικούς ιστότοπους.",
+    title: "Δημοσιεύσεις, συνεντεύξεις & ομιλίες",
+    description: "Η δημόσια παρουσία της Σουζάνας Κλημεντίδη μέσα από δημοσιεύσεις, συνεντεύξεις και συμμετοχές σε συνέδρια.",
+    note: "Οι δημοσιεύσεις παρουσιάζονται με την ημερομηνία και το πλαίσιο της αρχικής τους έκδοσης. Οι νομικές αναφορές τους αποτυπώνουν εκείνη τη χρονική περίοδο.",
   },
 }
 
 export const media = {
   sections: [
+    ...driveMediaSections,
     {
       title: "Τηλεόραση & βίντεο",
       description: "Εμφανίσεις και δηλώσεις σε τηλεοπτικά ή online μέσα.",
@@ -642,6 +669,12 @@ export const media = {
           date: "2022-06-16",
           format: "Βίντεο",
           href: "https://www.megatv.com/2022/06/16/pleistiriasmos-ti-mporoun-na-kanoun-oi-eyalotoi-polites-gia-na-ton-apotrepsoun/",
+          image: {
+            src: assetPath("/images/media/mega-vulnerable-debtors.webp"),
+            alt: "Στιγμιότυπο από την τηλεοπτική συζήτηση του MEGA για την προστασία των ευάλωτων οφειλετών",
+            fit: "contain",
+          },
+          linkLabel: "Δείτε το βίντεο",
           description:
             "Τηλεοπτικό απόσπασμα με αναφορά στην προστασία ευάλωτων οφειλετών.",
         },
@@ -651,6 +684,12 @@ export const media = {
           date: "2019-12-08",
           format: "Βίντεο",
           href: "https://www.mesogeiostv.gr/i-soyzana-klimentidi-gia-tin-prostasi/",
+          image: {
+            src: assetPath("/images/media/mesogeios-first-home.webp"),
+            alt: "Η Σουζάνα Κλημεντίδη στην τηλεοπτική παρέμβασή της στο Mesogeios TV για την πρώτη κατοικία",
+            fit: "contain",
+          },
+          linkLabel: "Δείτε το βίντεο",
           description:
             "Σύντομη παρέμβαση για τις ρυθμίσεις προστασίας της πρώτης κατοικίας.",
         },
@@ -667,6 +706,10 @@ export const media = {
           date: "2025-12-01",
           format: "Άρθρο",
           href: "https://www.dikastiko.gr/rota-ton-dikigoro-sou/soyzana-klimentidi-stalking-kai-prostasia-tis-prosopikotitas-i-nomiki-antikroysi-tis-epimonis-parakoloythisis/",
+          image: {
+            src: assetPath("/images/media/dikastiko-stalking.webp"),
+            alt: "Η Σουζάνα Κλημεντίδη στη φωτογραφία του άρθρου της στο Dikastiko.gr για το stalking",
+          },
           description:
             "Νομική ανάλυση για το θεσμικό πλαίσιο κατά του stalking.",
         },
@@ -677,6 +720,10 @@ export const media = {
           date: "2023-02-10",
           format: "Άρθρο",
           href: "https://www.dikastiko.gr/rota-ton-dikigoro-sou/soyzana-klimentidi-oi-parepomenes-ypochreoseis-ton-symvaseon-i-periptosi-tis-poinikis-ritras/",
+          image: {
+            src: assetPath("/images/media/dikastiko-contract-penalty.webp"),
+            alt: "Η Σουζάνα Κλημεντίδη στη φωτογραφία του άρθρου της στο Dikastiko.gr για την ποινική ρήτρα",
+          },
           description:
             "Ανάλυση για τις παρεπόμενες συμβατικές υποχρεώσεις και την ποινική ρήτρα.",
         },
@@ -687,8 +734,12 @@ export const media = {
           date: "2022-07-11",
           format: "Άρθρο",
           href: "https://www.dikastiko.gr/rota-ton-dikigoro-sou/soyzana-klimentidi-dikastiki-symparastasi-enas-allileggyos-thesmos-toy-idiotikoy-dikaioy/",
+          image: {
+            src: assetPath("/images/media/dikastiko-judicial-support.webp"),
+            alt: "Η Σουζάνα Κλημεντίδη στη φωτογραφία του άρθρου της στο Dikastiko.gr για τη δικαστική συμπαράσταση",
+          },
           description:
-            "Νομική ανάλυση για τον θεσμό της δικαστικής συμπαράστασης.",
+            "Άρθρο της Σουζάνας Κλημεντίδη και του Γιώργου Γούλα για τον θεσμό της δικαστικής συμπαράστασης.",
         },
         {
           title:
@@ -696,27 +747,39 @@ export const media = {
           outlet: "Enikos.gr",
           date: "2020-02-10",
           format: "Άρθρο",
-          href: "https://www.enikos.gr/economy/701457/proti-katoikia-yparchei-lysi-gia-tin-prostasia-ton-oikonomika-ady",
+          href: "https://www.enikos.gr/economy/proti-katoikia-yparchei-lysi-gia-tin-prostasia-ton-oikonomika-ady/1376986/",
+          image: {
+            src: assetPath("/images/media/enikos-first-home.webp"),
+            alt: "Σφυρί δικαστή και ομοίωμα κατοικίας στη φωτογραφία του άρθρου στο Enikos.gr",
+          },
           description:
-            "Ανάλυση για την προστασία της πρώτης κατοικίας υπό το νέο πτωχευτικό πλαίσιο.",
+            "Άρθρο της Σουζάνας Κλημεντίδη για την προστασία της πρώτης κατοικίας και την ανάγκη ρυθμίσεων για τους οικονομικά αδύναμους οφειλέτες.",
         },
         {
-          title: "Ο ηλικιακός ρατσισμός στην Ελλάδα και οι νέοι βουλευτές",
+          title: "Μήπως να πάμε παρακάτω;",
           outlet: "ATHENS VOICE",
           date: "2023-07-04",
           format: "Άρθρο",
           href: "https://www.athensvoice.gr/epikairotita/politiki-oikonomia/807596/o-ilikiakos-ratsismos-stin-ellada-kai-oi-neoi-vouleutes/",
-          description: "Συνοπτικό κείμενο για κοινωνικά και θεσμικά ζητήματα.",
+          image: {
+            src: assetPath("/images/media/athens-voice-ageism.webp"),
+            alt: "Το κτίριο της Βουλής στη φωτογραφία του άρθρου της Σουζάνας Κλημεντίδη στην ATHENS VOICE",
+          },
+          description: "Άρθρο της Σουζάνας Κλημεντίδη για τον ηλικιακό ρατσισμό στην Ελλάδα και την παρουσία νέων βουλευτών.",
         },
         {
           title:
-            "Πλειστηριασμοί: Στο σφυρί η πρώτη κατοικία της μεσαίας τάξης",
+            "Στο σφυρί η πρώτη κατοικία της μεσαίας τάξης: Σπίτι δημοσίων υπαλλήλων με 3 ανήλικα παιδιά βγαίνει σε πλειστηριασμό – Η “νομική ακαμψία”",
           outlet: "Dikastiko.gr",
           date: "2022-05-12",
-          format: "Άρθρο",
+          format: "Ρεπορτάζ",
           href: "https://www.dikastiko.gr/eidhsh/sto-sfyri-i-proti-katoikia-tis-mesaias-taxis-spiti-dimosion-ypallilon-me-3-anilika-paidia-vgainei-se-pleistiriasmo-i-nomiki-akampsia/",
+          image: {
+            src: assetPath("/images/media/dikastiko-judicial-support.webp"),
+            alt: "Η Σουζάνα Κλημεντίδη στη φωτογραφία του δημοσιεύματος στο Dikastiko.gr για την πρώτη κατοικία",
+          },
           description:
-            "Αναφορά στην νομική ακαμψία και τους πλειστηριασμούς πρώτης κατοικίας.",
+            "Δημοσίευμα του Newsroom με δηλώσεις και ενσωματωμένο άρθρο της Σουζάνας Κλημεντίδη για τους πλειστηριασμούς πρώτης κατοικίας.",
         },
       ],
     },
@@ -731,6 +794,11 @@ export const media = {
           date: "2025-10-24",
           format: "Συνέντευξη",
           href: "https://www.elle.gr/lifestyle/712042/souzana-klimentidi-mporoume-na-min-eimaste-teleies-alla-dikaioumaste-na-diekdikoume-to-kalutero-gia-ton-eauto-mas",
+          image: {
+            src: assetPath("/images/media/elle-interview.webp"),
+            alt: "Η Σουζάνα Κλημεντίδη στη φωτογραφία της συνέντευξής της στο ELLE Greece",
+            position: "50% 0%",
+          },
           description:
             "Συνέντευξη στο ELLE.gr με έμφαση στη διαδρομή και τις επαγγελματικές αξίες.",
         },
@@ -741,6 +809,10 @@ export const media = {
           date: "2024-05-24",
           format: "Συνέντευξη",
           href: "https://www.fortunegreece.com/interview/souzana-klimentidi-xreiazetai-na-dianisoume-akomi-poli-dromo-gia-na-mathoume-stis-ginaikes-na-exoun-aftopepoithisi/",
+          image: {
+            src: assetPath("/images/media/fortune-women-confidence.webp"),
+            alt: "Η Σουζάνα Κλημεντίδη στη φωτογραφία της συνέντευξής της στο Fortune Greece για τη γυναικεία αυτοπεποίθηση",
+          },
           description:
             "Συνέντευξη για τη γυναικεία ηγεσία και την αυτοπεποίθηση στον επαγγελματικό χώρο.",
         },
@@ -751,6 +823,10 @@ export const media = {
           date: "2023-07-08",
           format: "Συνέντευξη",
           href: "https://www.fortunegreece.com/interview/souzana-kli%C2%B5entidi-to-esg-prepei-na-sinadei-%C2%B5e-to-business-plan-ton-epixeiriseon/",
+          image: {
+            src: assetPath("/images/media/fortune-esg.webp"),
+            alt: "Η Σουζάνα Κλημεντίδη στη φωτογραφία της συνέντευξής της στο Fortune Greece για το ESG",
+          },
           description:
             "Συνέντευξη για το ESG, τα soft skills και τον ρόλο τους στη σύγχρονη επιχειρηματικότητα.",
         },
@@ -767,6 +843,12 @@ export const media = {
           date: "2025-11-28",
           format: "Βίντεο",
           href: "https://www.youtube.com/watch?v=uVdbjyQUHUg",
+          image: {
+            src: assetPath("/images/media/youtube-tattoo-dismissal.webp"),
+            alt: "Μικρογραφία του επεισοδίου «Χτύπησε tattoo και ΑΠΟΛΥΘΗΚΕ!» με τη Σουζάνα Κλημεντίδη στο YouTube",
+            fit: "contain",
+          },
+          linkLabel: "Δείτε το βίντεο",
           description:
             "Εργασιακά δικαιώματα, όρια διάκρισης και προστασία ιδιωτικής ζωής στον χώρο εργασίας.",
         },
@@ -775,8 +857,14 @@ export const media = {
             "Bullying ΤΕΛΟΣ. Έρχονται ΚΑΤΑΓΓΕΛΙΕΣ! ft. Σουζάνα Κλημεντίδη",
           outlet: "Θα Σας Ειδοποιήσουμε",
           date: "2025-04-01",
-          format: "Βίντεο",
+          format: "Ηχητικό",
+          linkLabel: "Ακούστε το επεισόδιο στο Spotify",
           href: "https://open.spotify.com/episode/6kUw0NijhElSN7YV4pQQ3D",
+          image: {
+            src: assetPath("/images/media/spotify-workplace-bullying.webp"),
+            alt: "Εικόνα εξωφύλλου του επεισοδίου με τη Σουζάνα Κλημεντίδη στο Spotify",
+            fit: "contain",
+          },
           description:
             "Συζήτηση για το εργασιακό bullying και τις νομικές διαστάσεις του.",
         },
@@ -787,6 +875,12 @@ export const media = {
           date: "2024-08-29",
           format: "Βίντεο",
           href: "https://www.youtube.com/watch?v=igy49HIgT5Y",
+          image: {
+            src: assetPath("/images/media/youtube-startupper.webp"),
+            alt: "Μικρογραφία της παρουσίασης της Σουζάνας Κλημεντίδη στο κανάλι Startupper.gr στο YouTube",
+            fit: "contain",
+          },
+          linkLabel: "Δείτε το βίντεο",
           description:
             "Η Σουζάνα Κλημεντίδη παρουσιάζει το γραφείο και μοιράζεται συμβουλές για startups.",
         },
@@ -797,6 +891,12 @@ export const media = {
           date: "2024-06-28",
           format: "Βίντεο",
           href: "https://www.youtube.com/watch?v=78mgA6Iefvc",
+          image: {
+            src: assetPath("/images/media/youtube-souzana-interview.webp"),
+            alt: "Μικρογραφία του επεισοδίου «Ξεγυμνώνουμε τη Σουζάνα Κλημεντίδη!» στο YouTube",
+            fit: "contain",
+          },
+          linkLabel: "Δείτε το βίντεο",
           description:
             "Εργασιακά δικαιώματα, νοοτροπία εταιρειών και η πορεία μιας δικηγόρου.",
         },
