@@ -39,6 +39,12 @@ test("formatting retains UTF-16 source offsets inside bold text, headings and nu
   assert.equal((result.match(/<li>/g) ?? []).length, 2)
 })
 
+test("plain contact labels from a live model remain distinct from their values", () => {
+  const result = render({ role: "assistant", content: "Τηλέφωνα\n+30 211 7500016\n+30 211 7500017\n\nEmail\nlawfirm@klimentidi.gr" })
+  assert.match(result, /<p class="font-semibold">Τηλέφωνα<\/p><p class="whitespace-pre-wrap">\+30 211 7500016\n\+30 211 7500017<\/p>/)
+  assert.match(result, /<p class="font-semibold">Email<\/p><p class="whitespace-pre-wrap">lawfirm@klimentidi.gr<\/p>/)
+})
+
 test("untrusted HTML and Markdown links stay text; a citation crossing blocks stays complete", () => {
   const content = '<img src=x onerror="alert(1)"> [click](javascript:alert(1))\n\n- πρώτο\n- δεύτερο'
   const result = render({ role: "assistant", content })

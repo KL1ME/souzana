@@ -18,6 +18,7 @@ function replyBlocks(content: string): Block[] {
     if (!line.trim()) continue
     const bullet = /^(?:[-*•]|(\d+)[.)])\s+(.+)$/.exec(line)
     const heading = /^#{1,3}\s+(.+)$/.exec(line)
+    const contactLabel = /^(?:Τηλέφωνα|Τηλέφωνο|Email|E-mail|Διεύθυνση|Phone(?: numbers)?|Telephone(?: numbers)?|Address):?$/iu.test(line.trim())
     const previous = blocks.at(-1)
     if (bullet) {
       const kind = bullet[1] ? "steps" : "bullets"
@@ -27,6 +28,8 @@ function replyBlocks(content: string): Block[] {
       } else blocks.push({ kind, ranges: [range], first: Number(bullet[1] ?? 1) })
     } else if (heading) {
       blocks.push({ kind: "heading", ranges: [{ start: start + line.length - heading[1].length, end: start + line.length }] })
+    } else if (contactLabel) {
+      blocks.push({ kind: "heading", ranges: [{ start, end: start + line.length }] })
     } else if (previous?.kind === "paragraph" && /^(?:\r\n|\n|\r)$/.test(content.slice(previous.ranges[0].end, start))) {
       previous.ranges[0].end = start + line.length
     } else blocks.push({ kind: "paragraph", ranges: [{ start, end: start + line.length }] })
