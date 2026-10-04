@@ -24,6 +24,24 @@ services:
         value: 0.0.0.0
       - key: THEMIS_ALLOWED_ORIGINS
         value: https://kl1me.github.io
+      # Limits are per process. Socket peers may be shared behind Render's proxy.
+      # No forwarded client-IP header is trusted without a verified proxy boundary.
+      - key: THEMIS_REQUESTS_PER_MINUTE
+        value: "12"
+      - key: THEMIS_REQUEST_BURST
+        value: "4"
+      - key: THEMIS_GLOBAL_REQUESTS_PER_MINUTE
+        value: "60"
+      - key: THEMIS_PROVIDER_CALLS_PER_HOUR
+        value: "300"
+      - key: THEMIS_PROVIDER_CALLS_PER_DAY
+        value: "1000"
+      - key: THEMIS_MAX_CONCURRENT_REQUESTS
+        value: "4"
+      - key: THEMIS_TIMEOUT_MS
+        value: "60000"
+      - key: THEMIS_BODY_TIMEOUT_MS
+        value: "10000"
       - key: THEMIS_DATABASE_PATH
         value: /tmp/themis/themis.sqlite
       - key: THEMIS_WEB_SEARCH_ENABLED

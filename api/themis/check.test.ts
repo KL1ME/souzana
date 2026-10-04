@@ -27,6 +27,10 @@ test("operator check verifies a real HTTP greeting and optional sourced question
   const server = createThemisServer({ apiKey: "", model: "fixture", allowedOrigins: ["https://example.com"], knowledge,
     generateResponse: async (body) => {
       calls++
+      if ((body.text as { format: { name: string } }).format.name === "scope_decision") {
+        assert.deepEqual(body.input, [{ role: "user", content: "Ποιο είναι το τηλέφωνο;" }])
+        return [{ type: "message", role: "assistant", content: [{ type: "output_text", text: JSON.stringify({ route: "firm" }) }] }]
+      }
       const format = body.text as { format: { schema: { properties: { citation_ids: { items: { enum: string[] } } } } } }
       return [{ type: "message", role: "assistant", content: [{ type: "output_text", text: JSON.stringify({
         answer_found: true, answer: "Δείτε τα δημοσιευμένα στοιχεία επικοινωνίας.", citation_ids: [format.format.schema.properties.citation_ids.items.enum[0]],
@@ -38,7 +42,7 @@ test("operator check verifies a real HTTP greeting and optional sourced question
     assert.deepEqual(result.map(({ check, ok }) => ({ check, ok })), ["health", "preflight", "greeting", "question"].map((check) => ({ check, ok: true })))
     assert.equal(result.at(-1)?.source, "database")
     assert.ok(result.every((step) => step.durationMs >= 0))
-    assert.equal(calls, 1)
+    assert.equal(calls, 2)
   } finally { await close(server); knowledge.close() }
 })
 

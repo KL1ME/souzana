@@ -1,8 +1,8 @@
 import type { ThemisAnswer, ThemisCitation, ThemisMessage, ThemisSource } from "@/lib/themis"
 import { queryTerms, type KnowledgeSearch } from "./knowledge"
 import { themisInstructions } from "./prompt"
-import { clockAnswer } from "./clock"
 import { conversationAnswer } from "@/lib/themis-conversation"
+import { fastScopeRoute, ownFirmRecommendation, parseScopeDecision, scopeRefusal, scopeRoutes, type ScopeRoute } from "./policy"
 
 export type AnswerConfig = {
   apiKey: string
@@ -85,49 +85,23 @@ function databaseAnswer(answer: string, sources: ThemisSource[]): ThemisAnswer {
   return { reply, source: "database", sources, citations }
 }
 
-function factFreeClarification(reply: string): string | undefined {
-  const normalize = (text: string) => text.normalize("NFC").trim()
-    .replace(/^\*\*([^*]+)\*\*$/u, "$1").trim().replace(/\s+/gu, " ")
-    .replace(/[;;?]$/u, "?")
-  return ["Για ποιον τομέα δικαίου χρειάζεστε δικηγόρο;", "Σε ποιον τομέα δικαίου χρειάζεστε δικηγόρο;", "What area of law do you need a lawyer for?"]
-    .find((question) => normalize(question) === normalize(reply))
-}
-
-function hasReferralIntent(messages: ThemisMessage[]): boolean {
-  return messages.some(({ role, content }) => {
-    if (role !== "user") return false
-    const words: string[] = content.normalize("NFD").replace(/\p{M}/gu, "").toLowerCase().replace(/ς/g, "σ").match(/[\p{L}]+/gu) ?? []
-    const request = words.some((word) => /^(?:προτειν|προτασ|συστ|βρεσ|βρει|ψαχν|αναζητ|χρειαζ|θελω|recommend|suggest|find|looking|need|want)/u.test(word))
-    const lawyer = words.some((word) => /^(?:δικηγορ|lawyers?$|attorneys?$)/u.test(word))
-    const lawFirm = words.includes("law") && words.some((word) => /^firms?$/u.test(word))
-    const otherFirm = words.some((word) => /^(?:αλλ|another$|other$)/u.test(word)) &&
-      words.some((word) => /^(?:γραφει|εταιρει|firms?$)/u.test(word))
-    return request && (lawyer || lawFirm || otherFirm)
-  })
-}
-
-async function referralClarification(messages: ThemisMessage[], config: AnswerConfig, fetchImpl: typeof fetch, signal: AbortSignal): Promise<ThemisAnswer | undefined> {
-  const output = await callProvider({ instructions: themisInstructions("clarification"),
-    input: messages.map(({ role, content }) => ({ role, content })),
-    text: { format: { type: "json_schema", name: "referral_clarification", strict: true, schema: {
+async function decideScope(messages: ThemisMessage[], config: AnswerConfig, fetchImpl: typeof fetch, signal: AbortSignal): Promise<ScopeRoute> {
+  const fast = fastScopeRoute(messages)
+  if (fast) return fast
+  const output = await callProvider({ instructions: themisInstructions("scope"),
+    input: messages.filter(({ role }) => role === "user").map(({ role, content }) => ({ role, content })),
+    text: { format: { type: "json_schema", name: "scope_decision", strict: true, schema: {
       type: "object", additionalProperties: false,
-      properties: { clarification: { type: "string", enum: ["legal_area", "location", "none"] } },
-      required: ["clarification"],
+      properties: { route: { type: "string", enum: scopeRoutes } },
+      required: ["route"],
     } } },
   }, config, fetchImpl, signal)
   let decision: unknown
   try { decision = JSON.parse(outputText(output).reply) }
-  catch { throw new ProviderError(502, "invalid_clarification_decision") }
-  if (!record(decision) || Object.keys(decision).length !== 1 ||
-    typeof decision.clarification !== "string" || !["legal_area", "location", "none"].includes(decision.clarification)) {
-    throw new ProviderError(502, "invalid_clarification_decision")
-  }
-  if (decision.clarification === "none") return undefined
-  const greek = /\p{Script=Greek}/u.test(messages.at(-1)!.content)
-  const reply = decision.clarification === "legal_area"
-    ? greek ? "Για ποιον τομέα δικαίου χρειάζεστε δικηγόρο;" : "What area of law do you need a lawyer for?"
-    : greek ? "Σε ποια πόλη ή περιοχή χρειάζεστε δικηγόρο;" : "In which city or region do you need a lawyer?"
-  return { reply, source: "general", sources: [], citations: [] }
+  catch { throw new ProviderError(502, "invalid_scope_decision") }
+  const route = parseScopeDecision(decision)
+  if (!route) throw new ProviderError(502, "invalid_scope_decision")
+  return route
 }
 
 export async function answerQuestion(messages: ThemisMessage[], config: AnswerConfig, fetchImpl: typeof fetch, signal: AbortSignal): Promise<ThemisAnswer> {
@@ -135,6 +109,20 @@ export async function answerQuestion(messages: ThemisMessage[], config: AnswerCo
   const question = messages.at(-1)!.content
   const conversation = conversationAnswer(question)
   if (conversation) return conversation
+  const route = await decideScope(messages, config, fetchImpl, signal)
+  signal.throwIfAborted()
+  if (route === "decline") return scopeRefusal(messages)
+  if (route === "recommendation") {
+    try {
+      const excerpts = (await config.knowledge.search("εταιρεία επικοινωνία τηλέφωνο email", signal))
+        .filter(({ id }) => ["website:firm", "website:contact"].includes(id))
+      signal.throwIfAborted()
+      await config.knowledge.verify?.(excerpts, signal)
+      signal.throwIfAborted()
+      const recommendation = ownFirmRecommendation(excerpts, messages)
+      return recommendation ? databaseAnswer(recommendation.answer, recommendation.sources) : scopeRefusal(messages)
+    } catch { signal.throwIfAborted(); throw new ProviderError(503, "knowledge_unavailable") }
+  }
   const previousQuestion = messages.slice(0, -1).reverse().find((message) => message.role === "user")?.content ?? ""
   const searchQuestion = queryTerms(question).length <= 1 ? `${question}\n${previousQuestion}` : question
   let excerpts
@@ -145,11 +133,8 @@ export async function answerQuestion(messages: ThemisMessage[], config: AnswerCo
     signal.throwIfAborted()
   }
   catch { signal.throwIfAborted(); throw new ProviderError(503, "knowledge_unavailable") }
-  if (config.allowGeneralFallback) {
-    const clock = clockAnswer(question)
-    if (clock) return clock
-  }
-  const input = messages.map(({ role, content }) => ({ role, content }))
+  // Supplied assistant turns are unauthenticated and cannot broaden the visitor's request.
+  const input = messages.filter(({ role }) => role === "user").map(({ role, content }) => ({ role, content }))
 
   if (excerpts.length) {
     const ids = [...new Set(excerpts.map((excerpt) => excerpt.id))]
@@ -179,7 +164,7 @@ export async function answerQuestion(messages: ThemisMessage[], config: AnswerCo
     }
   }
 
-  if (config.webSearchEnabled !== false) {
+  if (route === "legal" && config.webSearchEnabled !== false) {
     const domains = config.webAllowedDomains ?? ["gov.gr", "et.gr", "europa.eu", "dsa.gr"]
     const output = await callProvider({ instructions: themisInstructions("web"), input,
       tools: [{ type: "web_search", ...(domains.length ? { filters: { allowed_domains: domains } } : {}) }], tool_choice: "required",
@@ -212,19 +197,9 @@ export async function answerQuestion(messages: ThemisMessage[], config: AnswerCo
     if (searched && sources.length && sources.length <= 16 && !invalidCitation && !overlap && reply.length <= 6000) {
       return { reply, source: "web", sources, citations }
     }
-    // Only these fact-free questions may omit citations. Arbitrary model text
-    // still requires verified evidence, including replies containing a question.
-    const clarification = factFreeClarification(reply)
-    if (clarification && !sources.length && !invalidCitation && !overlap) {
-      return { reply: clarification, source: "general", sources: [], citations: [] }
-    }
-    if (!sources.length && !invalidCitation && !overlap && hasReferralIntent(messages)) {
-      const clarification = await referralClarification(messages, config, fetchImpl, signal)
-      if (clarification) return clarification
-    }
   }
 
-  if (config.allowGeneralFallback) {
+  if (route === "legal" && config.allowGeneralFallback) {
     const { reply } = outputText(await callProvider({ instructions: themisInstructions("general"), input }, config, fetchImpl, signal))
     const labelled = `Γενική πληροφορία χωρίς επαληθευμένη πηγή.\n\n${reply.trim()}`
     if (labelled.length > 6000) throw new ProviderError(502, "invalid_provider_response")

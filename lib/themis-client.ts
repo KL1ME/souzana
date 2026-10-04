@@ -37,7 +37,8 @@ export async function requestThemisAnswer(endpoint: string, messages: ThemisMess
     // fails to settle when aborted. A POST is never retried automatically.
     const exchange = async () => {
       const response = await fetchImpl(endpoint, { method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages }), credentials: "omit", signal: controller.signal })
+        body: JSON.stringify({ messages: messages.map(({ role, content }) => ({ role, content })) }),
+        credentials: "omit", signal: controller.signal })
       if (!response.ok) {
         if (response.status === 503) {
           const error = await response.json().catch(() => null)

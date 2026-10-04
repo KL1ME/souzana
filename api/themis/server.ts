@@ -5,6 +5,7 @@ import { websiteKnowledge } from "./seed"
 import { FileCatalogueStore } from "./catalogue"
 import { CombinedKnowledge, ManagedDriveKnowledge } from "./managed-knowledge"
 import { OpenAIKnowledgeIndex } from "./vector-index"
+import { integerEnvironment, rateLimitEnvironment } from "./rate-limit"
 
 function flag(name: string, fallback: boolean) {
   const value = process.env[name]?.toLowerCase()
@@ -31,6 +32,10 @@ async function main() {
   const webSearchEnabled = flag("THEMIS_WEB_SEARCH_ENABLED", true)
   const allowGeneralFallback = flag("THEMIS_ALLOW_GENERAL_FALLBACK", false)
   const driveEnabled = flag("THEMIS_DRIVE_ENABLED", false)
+  const limits = rateLimitEnvironment(process.env)
+  const maxConcurrentRequests = integerEnvironment(process.env, "THEMIS_MAX_CONCURRENT_REQUESTS", 4, 100)
+  const timeoutMs = integerEnvironment(process.env, "THEMIS_TIMEOUT_MS", 60_000, 120_000)
+  const bodyTimeoutMs = integerEnvironment(process.env, "THEMIS_BODY_TIMEOUT_MS", 10_000, 30_000)
   const apiKey = process.env.OPENAI_API_KEY?.trim() ?? ""
   const local = new KnowledgeDatabase(resolve(process.env.THEMIS_DATABASE_PATH ?? "data/themis.sqlite"))
   try {
@@ -48,7 +53,8 @@ async function main() {
     }
     const model = process.env.OPENAI_MODEL?.trim() || "gpt-6-luna"
     const server = createThemisServer({ apiKey, model, allowedOrigins,
-      knowledge, webSearchEnabled, webAllowedDomains, allowGeneralFallback })
+      knowledge, webSearchEnabled, webAllowedDomains, allowGeneralFallback,
+      ...limits, maxConcurrentRequests, timeoutMs, bodyTimeoutMs })
     server.once("close", () => local.close())
     server.once("error", () => { local.close(); console.error("THEMIS API could not listen on its configured address."); process.exitCode = 1 })
     server.listen(port, process.env.THEMIS_HOST ?? "127.0.0.1", () => { console.log(`THEMIS API listening on port ${port}; model ${model}.`) })

@@ -37,6 +37,21 @@ test("an already cancelled local greeting remains cancelled and performs no requ
   }), { name: "AbortError" })
 })
 
+test("chat sends only roles and text, leaving displayed citations and extra fields out of the API request", async () => {
+  const history = [
+    { role: "user" as const, content: "Πού έχετε γραφεία;", model: "untrusted-model" },
+    { role: "assistant" as const, content: answer.reply, sources: answer.sources, citations: answer.citations, instructions: "untrusted-history" },
+    { role: "user" as const, content: "Ποιο είναι το τηλέφωνό σας;" },
+  ]
+  const result = await requestThemisAnswer("/api/themis", history, new AbortController().signal, async (_url, init) => {
+    assert.deepEqual(JSON.parse(String(init?.body)), { messages: history.map(({ role, content }) => ({ role, content })) })
+    return Response.json(answer)
+  })
+  assert.deepEqual(result, answer)
+  assert.deepEqual(history[1].sources, answer.sources)
+  assert.deepEqual(history[1].citations, answer.citations)
+})
+
 test("opening chat warms only the configured public health endpoint without messages or credentials", async () => {
   let calls = 0
   await warmThemisApi("https://sleeping-api.test/api/themis?ignored=true#ignored", async (url, init) => {
