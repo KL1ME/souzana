@@ -37,6 +37,26 @@ function replyBlocks(content: string): Block[] {
   return blocks
 }
 
+// Only a verified citation range can be condensed. Its source metadata supplies
+// the href; Markdown destinations elsewhere in the answer are never activated.
+function citationLabel(text: string, sourceIndex: number): string {
+  let marker = text.trim()
+  while (marker.startsWith("(") && marker.endsWith(")")) marker = marker.slice(1, -1).trim()
+  const compact = `[${sourceIndex + 1}]`
+  if (/^(?:\[\d+\]|cite[^]*)$/u.test(marker)) return compact
+  const markdown = /^\[[^\]\r\n]+\]\(\s*(<?https?:\/\/\S+>?)\s*\)$/u.exec(marker)
+  let target = markdown?.[1] ?? marker
+  if (target.startsWith("<") && target.endsWith(">")) target = target.slice(1, -1)
+  if (/^https?:\/\/\S+$/u.test(target)) {
+    try {
+      const url = new URL(target)
+      if (!url.username && !url.password) return compact
+    } catch { /* Malformed citation text stays intact. */ }
+  }
+  // Citations can also cover a claim: preserve all of that original wording.
+  return text
+}
+
 export default function ThemisReply({ message, onInternalSource }: { message: ThemisMessage; onInternalSource: () => void }) {
   function inline(range: Range, bold = true): ReactNode[] {
     const parts: ReactNode[] = []
@@ -60,7 +80,7 @@ export default function ThemisReply({ message, onInternalSource }: { message: Th
         const text = message.content.slice(token.start, token.end)
         if (!source) parts.push(text)
         else {
-          const label = /^\s*(?:\[\d+\]|cite[^]*)\s*$/.test(text) ? `[${token.sourceIndex + 1}]` : text
+          const label = citationLabel(text, token.sourceIndex)
           const internalHref = internalThemisSourceHref(source.url, site.url)
           const props = {
             title: source.title,

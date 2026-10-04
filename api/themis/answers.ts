@@ -38,7 +38,8 @@ async function callProvider(body: Record<string, unknown>, config: AnswerConfig,
   }
   const response = await fetchImpl("https://api.openai.com/v1/responses", {
     method: "POST", headers: { Authorization: `Bearer ${config.apiKey}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ model: config.model, max_output_tokens: 1600, store: false, ...body }), signal,
+    body: JSON.stringify({ model: config.model, max_output_tokens: 1600, store: false,
+      ...(config.model === "gpt-6-luna" || config.model.startsWith("gpt-6-luna-") ? { reasoning: { effort: "low" } } : {}), ...body }), signal,
   })
   signal.throwIfAborted()
   if (!response.ok) throw new ProviderError(response.status === 429 ? 429 : 502, "provider_unavailable",
@@ -134,7 +135,7 @@ export async function answerQuestion(messages: ThemisMessage[], config: AnswerCo
   }
 
   if (config.webSearchEnabled !== false) {
-    const domains = config.webAllowedDomains ?? ["gov.gr", "et.gr", "europa.eu"]
+    const domains = config.webAllowedDomains ?? ["gov.gr", "et.gr", "europa.eu", "dsa.gr"]
     const output = await callProvider({ instructions: themisInstructions("web"), input,
       tools: [{ type: "web_search", ...(domains.length ? { filters: { allowed_domains: domains } } : {}) }], tool_choice: "required",
     }, config, fetchImpl, signal)

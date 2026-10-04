@@ -19,7 +19,7 @@ services:
       - key: OPENAI_API_KEY
         sync: false
       - key: OPENAI_MODEL
-        value: gpt-5.4-mini
+        value: gpt-6-luna
       - key: THEMIS_HOST
         value: 0.0.0.0
       - key: THEMIS_ALLOWED_ORIGINS
@@ -29,7 +29,7 @@ services:
       - key: THEMIS_WEB_SEARCH_ENABLED
         value: "true"
       - key: THEMIS_WEB_ALLOWED_DOMAINS
-        value: gov.gr,et.gr,europa.eu
+        value: gov.gr,et.gr,europa.eu,dsa.gr
       - key: THEMIS_ALLOW_GENERAL_FALLBACK
         value: "false"
       - key: THEMIS_DRIVE_ENABLED

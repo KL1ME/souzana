@@ -98,6 +98,35 @@ test("an approved database answer ends the pipeline without a web call", async (
   assert.deepEqual(parseThemisAnswer(result), result)
 })
 
+test("Luna keeps the structured evidence and web-search contracts with bounded reasoning", async (t) => {
+  const calls: Record<string, unknown>[] = []
+  const result = await answerQuestion(messages, config(t, { model: "gpt-6-luna" }), async (_url, init) => {
+    const body = JSON.parse(String(init?.body))
+    calls.push(body)
+    assert.equal(body.model, "gpt-6-luna")
+    assert.deepEqual(body.reasoning, { effort: "low" })
+    assert.equal(body.store, false)
+    assert.equal(body.max_output_tokens, 1600)
+    return body.text ? response(decline) : webResponse("https://www.dsa.gr/members")
+  }, new AbortController().signal)
+  assert.equal(calls.length, 2)
+  assert.ok(calls[0].text)
+  assert.equal(calls[1].tool_choice, "required")
+  assert.equal(result.source, "web")
+  assert.equal(result.sources[0].url, "https://www.dsa.gr/members")
+  assert.ok(parseThemisAnswer(result))
+})
+
+test("explicit model overrides retain their own reasoning defaults", async (t) => {
+  const result = await answerQuestion(messages, config(t, { model: "custom-compatible-model" }), async (_url, init) => {
+    const body = JSON.parse(String(init?.body))
+    assert.equal(body.model, "custom-compatible-model")
+    assert.equal(body.reasoning, undefined)
+    return response(decision)
+  }, new AbortController().signal)
+  assert.equal(result.source, "database")
+})
+
 test("simple clock questions use the server clock after retrieval without model or web calls", async (t) => {
   let searches = 0
   const base = config(t, { allowGeneralFallback: true })
@@ -118,7 +147,7 @@ test("related excerpts that cannot answer the question fall through to required 
     if (body.text) { stages.push("database"); return response(decline) }
     stages.push("web")
     assert.equal(body.tool_choice, "required")
-    assert.deepEqual(body.tools, [{ type: "web_search", filters: { allowed_domains: ["gov.gr", "et.gr", "europa.eu"] } }])
+    assert.deepEqual(body.tools, [{ type: "web_search", filters: { allowed_domains: ["gov.gr", "et.gr", "europa.eu", "dsa.gr"] } }])
     return webResponse()
   }, new AbortController().signal)
   assert.deepEqual(stages, ["database", "web"])

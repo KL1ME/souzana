@@ -74,6 +74,15 @@ test("uses the private OpenAI connection and retrieved approved firm content", a
   assert.equal(calls, 1)
 })
 
+test("health identifies the configured model without exposing credentials or making a provider call", async (t) => {
+  const { url } = await fixture(t, async () => { throw new Error("health must not call the provider") }, { model: "gpt-6-luna" })
+  const response = await fetch(url.replace("/api/themis", "/health"))
+  assert.equal(response.status, 200)
+  const text = await response.text()
+  assert.deepEqual(JSON.parse(text), { name: "THEMIS", ready: true, model: "gpt-6-luna" })
+  assert.ok(!text.includes("test-secret"))
+})
+
 test("preflight works and unapproved or missing origins never reach OpenAI", async (t) => {
   const { url, post } = await fixture(t, async () => { throw new Error("must not call provider") })
   const preflight = await fetch(url, { method: "OPTIONS", headers: { Origin: origin } })
@@ -99,7 +108,7 @@ test("a local generator works without an API key, preserves citations, and refus
     apiKey: "", model: "", localOnly: true, allowedOrigins: [localOrigin], generateResponse: async () => completed.output,
   })
   const health = await fetch(url.replace("/api/themis", "/health"))
-  assert.deepEqual(await health.json(), { name: "THEMIS", ready: true })
+  assert.deepEqual(await health.json(), { name: "THEMIS", ready: true, model: null })
   assert.equal((await post()).status, 403)
   const response = await post({ messages }, { Origin: localOrigin })
   assert.equal(response.status, 200)

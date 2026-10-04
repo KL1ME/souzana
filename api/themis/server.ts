@@ -24,7 +24,7 @@ async function main() {
   }
   const port = Number(process.env.THEMIS_PORT ?? process.env.PORT ?? 8787)
   if (!Number.isInteger(port) || port < 1 || port > 65535) throw new Error("Invalid THEMIS_PORT.")
-  const webAllowedDomains = (process.env.THEMIS_WEB_ALLOWED_DOMAINS ?? "gov.gr,et.gr,europa.eu").split(",").map((domain) => domain.trim().toLowerCase())
+  const webAllowedDomains = (process.env.THEMIS_WEB_ALLOWED_DOMAINS ?? "gov.gr,et.gr,europa.eu,dsa.gr").split(",").map((domain) => domain.trim().toLowerCase())
   if (!webAllowedDomains.length || webAllowedDomains.length > 100 || webAllowedDomains.some((domain) => !/^(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z]{2,}$/.test(domain))) {
     throw new Error("THEMIS_WEB_ALLOWED_DOMAINS must contain domain names without schemes, paths, or wildcards.")
   }
@@ -46,11 +46,12 @@ async function main() {
       knowledge = new CombinedKnowledge(local, new ManagedDriveKnowledge({ catalogue,
         index: new OpenAIKnowledgeIndex({ apiKey, vectorStoreId }), vectorStoreId, maxAgeMs: Math.round(hours * 60 * 60 * 1000) }))
     }
-    const server = createThemisServer({ apiKey, model: process.env.OPENAI_MODEL?.trim() || "gpt-5.4-mini", allowedOrigins,
+    const model = process.env.OPENAI_MODEL?.trim() || "gpt-6-luna"
+    const server = createThemisServer({ apiKey, model, allowedOrigins,
       knowledge, webSearchEnabled, webAllowedDomains, allowGeneralFallback })
     server.once("close", () => local.close())
     server.once("error", () => { local.close(); console.error("THEMIS API could not listen on its configured address."); process.exitCode = 1 })
-    server.listen(port, process.env.THEMIS_HOST ?? "127.0.0.1", () => { console.log(`THEMIS API listening on port ${port}.`) })
+    server.listen(port, process.env.THEMIS_HOST ?? "127.0.0.1", () => { console.log(`THEMIS API listening on port ${port}; model ${model}.`) })
     for (const signal of ["SIGINT", "SIGTERM"] as const) process.once(signal, () => server.close(() => process.exit(0)))
   } catch (error) { local.close(); throw error }
 }

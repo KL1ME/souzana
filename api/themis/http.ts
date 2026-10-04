@@ -133,7 +133,7 @@ export function createThemisServer(config: ThemisConfig, fetchImpl: typeof fetch
 
     const path = request.url?.split("?")[0]
     if (path === "/health" && request.method === "GET") {
-      respond(response, 200, { name: "THEMIS", ready })
+      respond(response, 200, { name: "THEMIS", ready, model: config.model || null })
       return
     }
     if (path !== "/api/themis") {
