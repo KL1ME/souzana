@@ -147,6 +147,20 @@ test("a fact-free lawyer clarification survives without citations or an extra fa
   }
 })
 
+test("fact-free clarifications tolerate question punctuation and bold without requiring a search", async (t) => {
+  for (const reply of [
+    "Για ποιον τομέα δικαίου χρειάζεστε δικηγόρο?",
+    "**Για ποιον τομέα δικαίου χρειάζεστε δικηγόρο;**",
+    "  Για ποιον\nτομέα δικαίου χρειάζεστε δικηγόρο;  ",
+  ]) {
+    const result = await answerQuestion(missing, config(t, { knowledge: { search: () => [] } }), async () =>
+      Response.json({ status: "completed", output: [
+        { type: "message", role: "assistant", content: [{ type: "output_text", text: reply, annotations: [] }] },
+      ] }), new AbortController().signal)
+    assert.deepEqual(result, { reply: "Για ποιον τομέα δικαίου χρειάζεστε δικηγόρο;", source: "general", sources: [], citations: [] })
+  }
+})
+
 test("clarification handling cannot authorize added facts, unsupported questions or invalid citations", async (t) => {
   for (const text of [
     "Για ποιον τομέα δικαίου χρειάζεστε δικηγόρο; Η προθεσμία είναι δέκα ημέρες.",

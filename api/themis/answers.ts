@@ -85,6 +85,14 @@ function databaseAnswer(answer: string, sources: ThemisSource[]): ThemisAnswer {
   return { reply, source: "database", sources, citations }
 }
 
+function factFreeClarification(reply: string): string | undefined {
+  const normalize = (text: string) => text.normalize("NFC").trim()
+    .replace(/^\*\*([^*]+)\*\*$/u, "$1").trim().replace(/\s+/gu, " ")
+    .replace(/[;;?]$/u, "?")
+  return ["Για ποιον τομέα δικαίου χρειάζεστε δικηγόρο;", "Σε ποιον τομέα δικαίου χρειάζεστε δικηγόρο;", "What area of law do you need a lawyer for?"]
+    .find((question) => normalize(question) === normalize(reply))
+}
+
 export async function answerQuestion(messages: ThemisMessage[], config: AnswerConfig, fetchImpl: typeof fetch, signal: AbortSignal): Promise<ThemisAnswer> {
   signal.throwIfAborted()
   const question = messages.at(-1)!.content
@@ -169,9 +177,8 @@ export async function answerQuestion(messages: ThemisMessage[], config: AnswerCo
     }
     // Only these fact-free questions may omit citations. Arbitrary model text
     // still requires verified evidence, including replies containing a question.
-    const clarification = reply.trim()
-    if (searched && !sources.length && !invalidCitation && !overlap &&
-      ["Για ποιον τομέα δικαίου χρειάζεστε δικηγόρο;", "Σε ποιον τομέα δικαίου χρειάζεστε δικηγόρο;", "What area of law do you need a lawyer for?"].includes(clarification)) {
+    const clarification = factFreeClarification(reply)
+    if (clarification && !sources.length && !invalidCitation && !overlap) {
       return { reply: clarification, source: "general", sources: [], citations: [] }
     }
   }
