@@ -6,7 +6,7 @@ import { ArrowRight, ArrowUp, ArrowUpRight, LoaderCircle, RotateCcw, X } from "l
 import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from "react"
 import { cn } from "@/lib/utils"
 import { themis, THEMIS_MAX_CONVERSATION_LENGTH, THEMIS_MAX_HISTORY, THEMIS_MAX_MESSAGE_LENGTH, type ThemisMessage } from "@/lib/themis"
-import { requestThemisAnswer } from "@/lib/themis-client"
+import { requestThemisAnswer, warmThemisApi } from "@/lib/themis-client"
 import { internalThemisSourceHref } from "@/lib/themis-links"
 import { site } from "@/lib/content"
 
@@ -50,6 +50,7 @@ export default function ThemisChat() {
   const inputRef = useRef<HTMLTextAreaElement>(null)
   const conversationRef = useRef<HTMLDivElement>(null)
   const requestRef = useRef<AbortController | null>(null)
+  const warmupAtRef = useRef<number | null>(null)
 
   useEffect(() => () => requestRef.current?.abort(), [])
 
@@ -90,6 +91,14 @@ export default function ThemisChat() {
     setDraft(question)
     inputRef.current?.focus()
   }
+
+  useEffect(() => {
+    if (!open || !endpoint || preview) return
+    const now = Date.now()
+    if (warmupAtRef.current !== null && now - warmupAtRef.current < 5 * 60_000) return
+    warmupAtRef.current = now
+    void warmThemisApi(endpoint)
+  }, [open])
 
   useEffect(() => {
     if (open && conversationRef.current) {

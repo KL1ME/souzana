@@ -2,7 +2,7 @@ import type { ThemisAnswer, ThemisCitation, ThemisMessage, ThemisSource } from "
 import { queryTerms, type KnowledgeSearch } from "./knowledge"
 import { themisInstructions } from "./prompt"
 import { clockAnswer } from "./clock"
-import { conversationAnswer } from "./conversation"
+import { conversationAnswer } from "@/lib/themis-conversation"
 
 export type AnswerConfig = {
   apiKey: string
