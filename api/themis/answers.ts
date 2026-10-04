@@ -93,6 +93,43 @@ function factFreeClarification(reply: string): string | undefined {
     .find((question) => normalize(question) === normalize(reply))
 }
 
+function hasReferralIntent(messages: ThemisMessage[]): boolean {
+  return messages.some(({ role, content }) => {
+    if (role !== "user") return false
+    const words: string[] = content.normalize("NFD").replace(/\p{M}/gu, "").toLowerCase().replace(/ς/g, "σ").match(/[\p{L}]+/gu) ?? []
+    const request = words.some((word) => /^(?:προτειν|προτασ|συστ|βρεσ|βρει|ψαχν|αναζητ|χρειαζ|θελω|recommend|suggest|find|looking|need|want)/u.test(word))
+    const lawyer = words.some((word) => /^(?:δικηγορ|lawyers?$|attorneys?$)/u.test(word))
+    const lawFirm = words.includes("law") && words.some((word) => /^firms?$/u.test(word))
+    const otherFirm = words.some((word) => /^(?:αλλ|another$|other$)/u.test(word)) &&
+      words.some((word) => /^(?:γραφει|εταιρει|firms?$)/u.test(word))
+    return request && (lawyer || lawFirm || otherFirm)
+  })
+}
+
+async function referralClarification(messages: ThemisMessage[], config: AnswerConfig, fetchImpl: typeof fetch, signal: AbortSignal): Promise<ThemisAnswer | undefined> {
+  const output = await callProvider({ instructions: themisInstructions("clarification"),
+    input: messages.map(({ role, content }) => ({ role, content })),
+    text: { format: { type: "json_schema", name: "referral_clarification", strict: true, schema: {
+      type: "object", additionalProperties: false,
+      properties: { clarification: { type: "string", enum: ["legal_area", "location", "none"] } },
+      required: ["clarification"],
+    } } },
+  }, config, fetchImpl, signal)
+  let decision: unknown
+  try { decision = JSON.parse(outputText(output).reply) }
+  catch { throw new ProviderError(502, "invalid_clarification_decision") }
+  if (!record(decision) || Object.keys(decision).length !== 1 ||
+    typeof decision.clarification !== "string" || !["legal_area", "location", "none"].includes(decision.clarification)) {
+    throw new ProviderError(502, "invalid_clarification_decision")
+  }
+  if (decision.clarification === "none") return undefined
+  const greek = /\p{Script=Greek}/u.test(messages.at(-1)!.content)
+  const reply = decision.clarification === "legal_area"
+    ? greek ? "Για ποιον τομέα δικαίου χρειάζεστε δικηγόρο;" : "What area of law do you need a lawyer for?"
+    : greek ? "Σε ποια πόλη ή περιοχή χρειάζεστε δικηγόρο;" : "In which city or region do you need a lawyer?"
+  return { reply, source: "general", sources: [], citations: [] }
+}
+
 export async function answerQuestion(messages: ThemisMessage[], config: AnswerConfig, fetchImpl: typeof fetch, signal: AbortSignal): Promise<ThemisAnswer> {
   signal.throwIfAborted()
   const question = messages.at(-1)!.content
@@ -180,6 +217,10 @@ export async function answerQuestion(messages: ThemisMessage[], config: AnswerCo
     const clarification = factFreeClarification(reply)
     if (clarification && !sources.length && !invalidCitation && !overlap) {
       return { reply: clarification, source: "general", sources: [], citations: [] }
+    }
+    if (!sources.length && !invalidCitation && !overlap && hasReferralIntent(messages)) {
+      const clarification = await referralClarification(messages, config, fetchImpl, signal)
+      if (clarification) return clarification
     }
   }
 

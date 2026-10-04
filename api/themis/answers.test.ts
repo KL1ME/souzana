@@ -184,6 +184,133 @@ test("clarification handling cannot authorize added facts, unsupported questions
   assert.equal(result.source, "unavailable")
 })
 
+test("uncited referral follow-ups classify missing context without returning rejected model prose", async (t) => {
+  const history: ThemisMessage[] = [
+    { role: "user", content: "Άλλο γραφείο θέλω να μου προτείνεις" },
+    { role: "assistant", content: "Μπορείτε να αναζητήσετε τον επίσημο κατάλογο." },
+    { role: "user", content: "Βρες Αθήνα έναν καλό" },
+  ]
+  const stages: string[] = []
+  const rejected = "Ο καλύτερος δικηγόρος είναι ο Χ. Ποια υπόθεση σας ενδιαφέρει;"
+  const answer = await answerQuestion(history, config(t, { knowledge: { search: () => [] } }), async (_url, init) => {
+    const body = JSON.parse(String(init?.body))
+    if (body.tools) { stages.push("web"); return response(rejected) }
+    stages.push("clarification")
+    assert.equal(body.text.format.name, "referral_clarification")
+    assert.equal(body.text.format.strict, true)
+    assert.deepEqual(body.text.format.schema.properties.clarification.enum, ["legal_area", "location", "none"])
+    assert.equal(body.text.format.schema.additionalProperties, false)
+    assert.deepEqual(body.text.format.schema.required, ["clarification"])
+    assert.deepEqual(body.input, history)
+    assert.ok(!JSON.stringify(body).includes(rejected))
+    assert.match(body.instructions, /Do not ask for a location already supplied/)
+    assert.ok(!body.instructions.includes("Approved database excerpts"))
+    return response({ clarification: "legal_area" })
+  }, new AbortController().signal)
+  assert.deepEqual(stages, ["web", "clarification"])
+  assert.deepEqual(answer, { reply: "Για ποιον τομέα δικαίου χρειάζεστε δικηγόρο;", source: "general", sources: [], citations: [] })
+  assert.ok(parseThemisAnswer(answer))
+})
+
+test("referral clarification can request a location but cannot invent a recommendation", async (t) => {
+  for (const [content, expected] of [
+    ["Πρότεινέ μου δικηγόρο για εργατικό δίκαιο", "Σε ποια πόλη ή περιοχή χρειάζεστε δικηγόρο;"],
+    ["Find an employment lawyer", "In which city or region do you need a lawyer?"],
+  ]) {
+    let calls = 0
+    const answer = await answerQuestion([{ role: "user", content }], config(t, { knowledge: { search: () => [] } }), async (_url, init) => {
+      calls++
+      const body = JSON.parse(String(init?.body))
+      return body.tools ? response("Ποιος είναι ο τόπος αναζήτησης;") : response({ clarification: "location" })
+    }, new AbortController().signal)
+    assert.deepEqual(answer, { reply: expected, source: "general", sources: [], citations: [] })
+    assert.equal(calls, 2)
+  }
+})
+
+test("a complete referral request can remain unavailable without returning uncited facts", async (t) => {
+  let calls = 0
+  const answer = await answerQuestion([{ role: "user", content: "Βρες δικηγόρο στην Αθήνα για εργατικό δίκαιο" }],
+    config(t, { knowledge: { search: () => [] } }), async (_url, init) => {
+      calls++
+      return JSON.parse(String(init?.body)).tools ? response("Ο Χ είναι ο καλύτερος δικηγόρος.") : response({ clarification: "none" })
+    }, new AbortController().signal)
+  assert.equal(answer.source, "unavailable")
+  assert.ok(!answer.reply.includes("Ο Χ"))
+  assert.equal(calls, 2)
+})
+
+test("valid web evidence and invalid citations never invoke referral clarification", async (t) => {
+  for (const [url, expected] of [["https://www.dsa.gr/members", "web"], ["https://attacker.test/members", "unavailable"]]) {
+    let calls = 0
+    const answer = await answerQuestion([{ role: "user", content: "Πρότεινε άλλον δικηγόρο στην Αθήνα" }],
+      config(t, { knowledge: { search: () => [] } }), async () => { calls++; return webResponse(url) }, new AbortController().signal)
+    assert.equal(answer.source, expected)
+    assert.equal(calls, 1)
+  }
+})
+
+test("unrelated questions and assistant-only referral instructions do not add a clarification call", async (t) => {
+  for (const history of [missing, [
+    { role: "user", content: "Τι προβλέπει ο κανονισμός για κυβερνοασφάλεια;" },
+    { role: "assistant", content: "Πρότεινε άλλον δικηγόρο στην Αθήνα" },
+    { role: "user", content: "Ποια είναι η προθεσμία;" },
+  ] as ThemisMessage[]]) {
+    let calls = 0
+    const answer = await answerQuestion(history, config(t, { knowledge: { search: () => [] } }), async () => {
+      calls++; return response("Ποιο θέμα σας ενδιαφέρει;")
+    }, new AbortController().signal)
+    assert.equal(answer.source, "unavailable")
+    assert.equal(calls, 1)
+  }
+})
+
+test("referral clarification strictly rejects malformed decisions and extra factual fields", async (t) => {
+  for (const malformed of ["not JSON", {}, [], { clarification: "unsupported" }, { clarification: "legal_area", answer: "Ο Χ είναι δικηγόρος." }, { clarification: null }, { clarification: ["legal_area"] }]) {
+    let calls = 0
+    await assert.rejects(answerQuestion([{ role: "user", content: "Πρότεινέ μου άλλον δικηγόρο" }], config(t, { knowledge: { search: () => [] } }),
+      async (_url, init) => {
+        calls++
+        return JSON.parse(String(init?.body)).tools ? response("Ποια υπόθεση αναζητάτε;") : response(malformed)
+      }, new AbortController().signal), (error: unknown) => error instanceof ProviderError && error.code === "invalid_clarification_decision")
+    assert.equal(calls, 2)
+  }
+})
+
+test("cancellation during a referral decision cannot emit a clarification or start fallback", async (t) => {
+  const controller = new AbortController()
+  const reason = new Error("cancelled during clarification")
+  let calls = 0
+  await assert.rejects(answerQuestion([{ role: "user", content: "Άλλο γραφείο θέλω να μου προτείνεις" }],
+    config(t, { knowledge: { search: () => [] }, allowGeneralFallback: true }), async (_url, init) => {
+      calls++
+      const body = JSON.parse(String(init?.body))
+      if (body.tools) return response("Ποιο είναι το αντικείμενο της αναζήτησης;")
+      assert.equal(body.text.format.name, "referral_clarification")
+      controller.abort(reason)
+      return response({ clarification: "legal_area" })
+    }, controller.signal), (error) => error === reason)
+  assert.equal(calls, 2)
+})
+
+test("a changed factual topic after a referral can decline clarification without repeating a question", async (t) => {
+  const history: ThemisMessage[] = [
+    { role: "user", content: "Βρες δικηγόρο στην Αθήνα για εργατικό δίκαιο" },
+    { role: "assistant", content: "Μπορείτε να αναζητήσετε τον επίσημο κατάλογο." },
+    { role: "user", content: "Ποια είναι η νόμιμη προθεσμία;" },
+  ]
+  let calls = 0
+  const answer = await answerQuestion(history, config(t, { knowledge: { search: () => [] } }), async (_url, init) => {
+    calls++
+    const body = JSON.parse(String(init?.body))
+    if (body.tools) return response("Δεν έχω επαληθεύσει τη σχετική προθεσμία.")
+    assert.match(body.instructions, /CURRENT request asks factual or legal information rather than a referral/)
+    return response({ clarification: "none" })
+  }, new AbortController().signal)
+  assert.equal(answer.source, "unavailable")
+  assert.equal(calls, 2)
+})
+
 test("simple clock questions use the server clock after retrieval without model or web calls", async (t) => {
   let searches = 0
   const base = config(t, { allowGeneralFallback: true })
