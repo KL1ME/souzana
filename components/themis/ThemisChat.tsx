@@ -3,11 +3,12 @@
 import * as Dialog from "@radix-ui/react-dialog"
 import Link from "next/link"
 import { ArrowRight, ArrowUp, ArrowUpRight, LoaderCircle, RotateCcw, X } from "lucide-react"
-import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from "react"
+import { useEffect, useLayoutEffect, useRef, useState, type FormEvent, type KeyboardEvent } from "react"
 import { cn } from "@/lib/utils"
 import { themis, THEMIS_MAX_CONVERSATION_LENGTH, THEMIS_MAX_HISTORY, THEMIS_MAX_MESSAGE_LENGTH, type ThemisMessage } from "@/lib/themis"
 import { requestThemisAnswer, warmThemisApi } from "@/lib/themis-client"
 import { internalThemisSourceHref } from "@/lib/themis-links"
+import { trackThemisViewport } from "@/lib/themis-viewport"
 import { site } from "@/lib/content"
 
 const endpoint = process.env.NEXT_PUBLIC_THEMIS_API_URL?.trim()
@@ -45,6 +46,7 @@ export default function ThemisChat() {
   const [sending, setSending] = useState(false)
   const [error, setError] = useState("")
   const [showInvitation, setShowInvitation] = useState(false)
+  const [panel, setPanel] = useState<HTMLDivElement | null>(null)
   const titleRef = useRef<HTMLHeadingElement>(null)
   const invitationTimerRef = useRef<number | null>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
@@ -53,6 +55,10 @@ export default function ThemisChat() {
   const warmupAtRef = useRef<number | null>(null)
 
   useEffect(() => () => requestRef.current?.abort(), [])
+
+  useLayoutEffect(() => {
+    if (open && panel) return trackThemisViewport(panel, conversationRef.current)
+  }, [open, panel])
 
   useEffect(() => {
     if (!endpoint) return
@@ -215,7 +221,8 @@ export default function ThemisChat() {
         <Dialog.Overlay className="fixed inset-0 z-50 bg-white/60 data-[state=open]:animate-in data-[state=open]:fade-in-0" />
         <Dialog.Content
           id="themis-dialog"
-          className="fixed inset-x-3 bottom-3 z-50 flex h-[min(600px,calc(100dvh-24px))] flex-col overflow-hidden rounded-xl border border-accent bg-white text-black shadow-sm outline-none data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:slide-in-from-bottom-3 sm:inset-x-auto sm:right-7 sm:bottom-7 sm:h-[min(600px,calc(100dvh-56px))] sm:w-[420px]"
+          ref={setPanel}
+          className="themis-panel z-50 flex flex-col overflow-hidden rounded-xl border border-accent bg-white text-black shadow-sm outline-none data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:slide-in-from-bottom-3"
           onOpenAutoFocus={(event) => {
             event.preventDefault()
             if (endpoint && (messages.length || draft)) inputRef.current?.focus()
