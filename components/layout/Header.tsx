@@ -50,6 +50,9 @@ export default function Header() {
     if (href === "/") {
       return pathname === "/"
     }
+    if (href === "/media" && pathname?.startsWith("/insights")) {
+      return true
+    }
     return pathname?.startsWith(href)
   }
 

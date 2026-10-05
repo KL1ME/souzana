@@ -118,8 +118,7 @@ export const site = {
     { href: "/#company", label: "Η εταιρεία μας" },
     { href: "/practice-areas", label: "Τομείς" },
     { href: "/team", label: "Ομάδα" },
-    { href: "/insights", label: "Άρθρα" },
-    { href: "/media", label: "Μέσα" },
+    { href: "/media", label: "Άρθρα & Μέσα" },
   ] satisfies NavItem[],
   seo: {
     title: "Κλημεντίδη – Τσιλιβαράκη | Δικηγορική Εταιρεία",
@@ -440,8 +439,9 @@ export const posts: Post[] = [
     excerpt:
       "Τρία σημεία που μειώνουν παρερμηνείες και ενισχύουν τη σαφήνεια.",
     image: {
-      src: assetPath("/images/insights-1.jpg"),
-      alt: "Βιβλία και σημειώσεις πάνω σε μαρμάρινο γραφείο",
+      src: assetPath("/images/media/souzana-business.webp"),
+      alt: "Η Σουζάνα Ι. Κλημεντίδη στο γραφείο της",
+      position: "50% 30%",
     },
     content: [
       {
@@ -475,8 +475,9 @@ export const posts: Post[] = [
     category: "Ακίνητα",
     excerpt: "Οι όροι που επηρεάζουν κόστος, διάρκεια και ευελιξία.",
     image: {
-      src: assetPath("/images/insights-2.jpg"),
-      alt: "Φωτεινό γραφειακό περιβάλλον με λιτή αισθητική",
+      src: assetPath("/images/media/lawyer-39-portrait.webp"),
+      alt: "Πορτρέτο της Σουζάνας Ι. Κλημεντίδη",
+      position: "50% 15%",
     },
     content: [
       {
@@ -505,8 +506,9 @@ export const posts: Post[] = [
     category: "Εργατικό",
     excerpt: "Σύντομος οδηγός για ψύχραιμη αξιολόγηση και σωστή προετοιμασία.",
     image: {
-      src: assetPath("/images/insights-3.jpg"),
-      alt: "Βιβλία και σημειώσεις πάνω σε μαρμάρινο γραφείο",
+      src: assetPath("/images/media/souzana-portrait.webp"),
+      alt: "Πορτρέτο της Σουζάνας Ι. Κλημεντίδη",
+      position: "50% 15%",
     },
     content: [
       {
@@ -648,9 +650,9 @@ export const pages = {
     relatedLabel: "Σχετικά άρθρα",
   },
   media: {
-    eyebrow: "Μέσα",
-    title: "Δημοσιεύσεις, συνεντεύξεις & ομιλίες",
-    description: "Η δημόσια παρουσία της Σουζάνας Κλημεντίδη μέσα από δημοσιεύσεις, συνεντεύξεις και συμμετοχές σε συνέδρια.",
+    eyebrow: "Δημοσιεύσεις & παρεμβάσεις",
+    title: "Άρθρα & Μέσα",
+    description: "Νομικές αναλύσεις, δημοσιεύσεις στον Τύπο, συνεντεύξεις, βίντεο, podcasts και συμμετοχές σε συνέδρια της Σουζάνας Κλημεντίδη, σε μία ενότητα.",
     note: "Οι δημοσιεύσεις παρουσιάζονται με την ημερομηνία και το πλαίσιο της αρχικής τους έκδοσης. Οι νομικές αναφορές τους αποτυπώνουν εκείνη τη χρονική περίοδο.",
   },
 }

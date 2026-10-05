@@ -7,7 +7,7 @@ import { Card } from "@/components/ui/card"
 import Prose from "@/components/typography/Prose"
 import { pages, posts, site } from "@/lib/content"
 import { estimateReadingTime, formatDate, slugify } from "@/lib/format"
-import { ExternalLink } from "lucide-react"
+import { ArrowLeft, ExternalLink } from "lucide-react"
 
 const buildToc = (content: typeof posts[number]["content"]) =>
   content
@@ -77,6 +77,13 @@ export default async function InsightDetail({ params }: { params: Promise<{ slug
       <section className="border-b border-border/60 bg-muted py-14 sm:py-20 lg:py-24">
         <Container>
           <div className="space-y-6">
+            <Link
+              href="/media"
+              className="inline-flex items-center gap-2 text-sm font-semibold text-muted-foreground transition-colors hover:text-foreground"
+            >
+              <ArrowLeft className="size-4" aria-hidden="true" />
+              Όλα τα άρθρα & μέσα
+            </Link>
             <p className="text-xs font-semibold uppercase tracking-[0.3em] text-muted-foreground">
               {pages.insights.eyebrow}
             </p>
@@ -98,6 +105,7 @@ export default async function InsightDetail({ params }: { params: Promise<{ slug
                 fill
                 loading="eager"
                 className="object-cover"
+                style={post.image.position ? { objectPosition: post.image.position } : undefined}
                 sizes="(min-width: 1024px) 70vw, 100vw"
               />
             </div>
