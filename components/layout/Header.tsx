@@ -1,11 +1,14 @@
 "use client"
 
 import Link from "next/link"
+import Image from "next/image"
 import { useEffect, useRef, useState } from "react"
 import { usePathname } from "next/navigation"
 import { Menu } from "lucide-react"
 import { site } from "@/lib/content"
 import { cn } from "@/lib/utils"
+import { assetPath } from "@/lib/asset"
+import AnimatedLogo from "@/components/branding/AnimatedLogo"
 import { Button } from "@/components/ui/button"
 import {
   Sheet,
@@ -68,16 +71,21 @@ export default function Header() {
       <div className="mx-auto flex h-20 w-full max-w-[1200px] items-center justify-between px-5 sm:h-24 sm:px-6">
         <Link
           href="/"
-          className="flex min-w-0 max-w-[260px] flex-col gap-1 leading-none sm:max-w-none"
+          className="block shrink-0 rounded-sm focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent"
           aria-label={site.name}
         >
-          <span className="header-wordmark whitespace-nowrap font-serif text-[1.02rem] font-semibold tracking-[0.035em] text-foreground sm:text-[1.2rem] lg:text-[1.3rem]">
-            {site.wordmark.primary}
-          </span>
-          <span className="header-tagline whitespace-nowrap text-[0.48rem] font-medium uppercase tracking-[0.18em] text-muted-foreground sm:text-[0.56rem] sm:tracking-[0.24em]">
-            {site.wordmark.secondary} <span aria-hidden="true">•</span>{" "}
-            {site.wordmark.subtitle}
-          </span>
+          {isHome ? (
+            <AnimatedLogo />
+          ) : (
+            <Image
+              src={assetPath("/images/brand/klimentidi-tsilivaraki-gold.svg")}
+              alt="Κλημεντίδη Τσιλιβαράκη & Συνεργάτες — Δικηγορική Εταιρεία"
+              width={1280}
+              height={529}
+              priority
+              className="header-logo h-auto w-[168px] sm:w-[208px]"
+            />
+          )}
         </Link>
         <nav className="hidden items-center gap-8 text-sm md:flex" aria-label="Κύρια πλοήγηση">
           {site.nav.map((item) => (

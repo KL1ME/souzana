@@ -1,5 +1,7 @@
 import Link from "next/link"
+import Image from "next/image"
 import Container from "@/components/layout/Container"
+import { assetPath } from "@/lib/asset"
 import { site } from "@/lib/content"
 
 export default function Footer() {
@@ -7,6 +9,15 @@ export default function Footer() {
     <footer className="border-t border-accent/30 bg-background">
       <Container className="grid gap-10 py-12 sm:py-16 md:grid-cols-[1.6fr_1fr] md:gap-16">
         <div className="space-y-6">
+          <Link href="/" className="inline-block rounded-sm focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent">
+            <Image
+              src={assetPath("/images/brand/klimentidi-tsilivaraki-gold.svg")}
+              alt="Κλημεντίδη Τσιλιβαράκη & Συνεργάτες — Δικηγορική Εταιρεία"
+              width={1280}
+              height={529}
+              className="h-auto w-[240px] sm:w-[280px]"
+            />
+          </Link>
           <div className="space-y-4">
             <p className="font-serif text-xl font-semibold leading-tight tracking-[0.025em] sm:text-2xl">
               {site.footer.name}
