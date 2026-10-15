@@ -7,7 +7,7 @@ import { usePathname } from "next/navigation"
 import { Menu } from "lucide-react"
 import { site } from "@/lib/content"
 import { cn } from "@/lib/utils"
-import { assetPath } from "@/lib/asset"
+import { firmLogo } from "@/lib/brand"
 import AnimatedLogo from "@/components/branding/AnimatedLogo"
 import { Button } from "@/components/ui/button"
 import {
@@ -72,14 +72,14 @@ export default function Header() {
         <Link
           href="/"
           className="block shrink-0 rounded-sm focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent"
-          aria-label={site.name}
+          aria-label={firmLogo.alt}
         >
           {isHome ? (
             <AnimatedLogo />
           ) : (
             <Image
-              src={assetPath("/images/brand/klimentidi-tsilivaraki-gold.svg")}
-              alt="Κλημεντίδη Τσιλιβαράκη & Συνεργάτες — Δικηγορική Εταιρεία"
+              src={firmLogo.src}
+              alt={firmLogo.alt}
               width={1280}
               height={529}
               priority

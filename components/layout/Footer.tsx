@@ -1,7 +1,7 @@
 import Link from "next/link"
 import Image from "next/image"
 import Container from "@/components/layout/Container"
-import { assetPath } from "@/lib/asset"
+import { firmLogo } from "@/lib/brand"
 import { site } from "@/lib/content"
 
 export default function Footer() {
@@ -11,8 +11,8 @@ export default function Footer() {
         <div className="space-y-6">
           <Link href="/" className="inline-block rounded-sm focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent">
             <Image
-              src={assetPath("/images/brand/klimentidi-tsilivaraki-gold.svg")}
-              alt="Κλημεντίδη Τσιλιβαράκη & Συνεργάτες — Δικηγορική Εταιρεία"
+              src={firmLogo.src}
+              alt={firmLogo.alt}
               width={1280}
               height={529}
               className="h-auto w-[240px] sm:w-[280px]"

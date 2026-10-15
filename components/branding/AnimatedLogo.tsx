@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useRef } from "react"
-import { assetPath } from "@/lib/asset"
+import { firmLogo } from "@/lib/brand"
 
 type Pose = {
   at: number
@@ -153,13 +153,13 @@ export default function AnimatedLogo() {
       height="529.15"
       className="header-logo h-auto w-[168px] sm:w-[208px]"
       role="img"
-      aria-label="Κλημεντίδη Τσιλιβαράκη & Συνεργάτες — Δικηγορική Εταιρεία"
+      aria-label={firmLogo.alt}
       fill="#daa04c"
     >
       <g ref={wordingRef} className="logo-wording" aria-hidden="true">
         <svg x="440" width="840" height="529.15" viewBox="440 0 840 529.15">
           <image
-            href={assetPath("/images/brand/klimentidi-tsilivaraki-gold.svg")}
+            href={firmLogo.src}
             width="1280"
             height="529.15"
           />
