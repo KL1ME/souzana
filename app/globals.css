@@ -70,6 +70,21 @@ body:has(.team-directory-page, .team-profile-page) .themis-launcher { display: n
 .team-back-bottom { margin-top: 2.5rem; border-top: 1px solid #e1dbcf; padding-top: 1.5rem; width: 100%; }
 .team-home-person .team-portrait { width: 100%; height: auto; aspect-ratio: 4 / 5; }
 .team-home-person .team-portrait > span { font-size: 3rem; }
+.team-photo-page { padding: 2.5rem 0 4rem; background: #fff; }
+body:has(.team-photo-page) .themis-launcher { display: none; }
+.team-photo-page h1 { margin-bottom: 1.75rem; font-family: Georgia, serif; font-size: clamp(2rem, 3.5vw, 3rem); color: #292723; letter-spacing: -.03em; }
+.team-photo-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: .75rem; }
+.team-photo-tile { position: relative; display: block; min-width: 0; }
+.team-photo-tile .team-portrait { width: 100%; height: auto; aspect-ratio: 4 / 5; }
+.team-photo-tile .team-portrait > span { font-size: clamp(2.5rem, 4vw, 4rem); }
+.team-photo-name { position: absolute; inset: auto 0 0; padding: 1rem .75rem; background: rgb(41 39 35 / 88%); color: white; font-size: .75rem; line-height: 1.6; opacity: 0; transition: opacity .15s; pointer-events: none; }
+.team-photo-tile:hover .team-photo-name, .team-photo-tile:focus-visible .team-photo-name { opacity: 1; }
+.team-photo-tile:focus-visible { outline: 2px solid #b08d3b; outline-offset: 4px; }
+@media (max-width: 1023px) { .team-photo-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 639px) {
+  .team-photo-page { padding-top: 1.5rem; }
+  .team-photo-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .6rem; }
+}
 .team-directory-page a:focus-visible, .team-directory-page button:focus-visible, .team-directory-page input:focus-visible,
 .team-profile-page a:focus-visible { outline: 2px solid #b08d3b; outline-offset: 5px; }
 @media (max-width: 1100px) {
