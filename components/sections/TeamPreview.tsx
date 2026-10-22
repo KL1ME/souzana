@@ -22,7 +22,7 @@ export default function TeamPreview() {
                 <h3 className="text-base font-semibold text-foreground">
                   {member.name}
                 </h3>
-                <p className="text-sm text-muted-foreground">{member.role}</p>
+                {member.role && <p className="text-sm text-muted-foreground">{member.role}</p>}
               </div>
             </Link>
           ))}

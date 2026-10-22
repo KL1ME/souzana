@@ -19,10 +19,10 @@ function sampleReply(question: string) {
     return `Η εταιρεία μας παρέχει νομική υποστήριξη στους ακόλουθους τομείς:\n\n${practiceAreas.map((area) => `• ${area.title}`).join("\n")}\n\nΜπορείτε να δείτε αναλυτικά τις υπηρεσίες μας στη σελίδα «Τομείς».`
   }
   if (/ομαδ|ποιοι|δικηγορο/.test(text)) {
-    return `Η ${pages.team.profile.title} είναι ${pages.team.profile.role}.\n\nΣτη σελίδα της ομάδας παρουσιάζονται επίσης:\n${teamMembers.map((member) => `• ${member.name} — ${member.title}`).join("\n")}\n\nΓνωρίστε τα πρόσωπα και την εμπειρία τους στη σελίδα «Η ομάδα μας».`
+    return `Στη σελίδα της ομάδας παρουσιάζονται:\n• ${pages.team.profile.title}\n${teamMembers.map((member) => `• ${member.name} — ${member.title}`).join("\n")}\n\nΓνωρίστε τα πρόσωπα και την εμπειρία τους στη σελίδα «Η ομάδα μας».`
   }
   if (/που|γραφει|καλαματ|αθην/.test(text)) {
-    return `Η εταιρεία δραστηριοποιείται στην Καλαμάτα και την Αθήνα.\n\n${pages.team.profile.summary[0]}\n\nΠαρέχουμε νομική υποστήριξη σε φυσικά και νομικά πρόσωπα, επιχειρήσεις και οργανισμούς.`
+    return websiteKnowledge().find((document) => document.id === "website:locations")!.content
   }
   return "Αυτή είναι μια ενδεικτική συνομιλία με τη THEMIS. Δοκιμάστε μια ερώτηση για τους τομείς εξειδίκευσης, την ομάδα ή την παρουσία μας στην Καλαμάτα και την Αθήνα. Οι απαντήσεις εδώ είναι έτοιμα παραδείγματα."
 }

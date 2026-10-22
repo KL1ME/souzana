@@ -13,7 +13,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const { slug } = await params
   const member = directoryMembers.find((person) => person.id === slug)
   if (!member) notFound()
-  return { ...createPageMetadata(member.name, member.role, memberPath(slug, "2")), robots: { index: false, follow: true } }
+  return { ...createPageMetadata(member.name, member.role || member.name, memberPath(slug, "2")), robots: { index: false, follow: true } }
 }
 
 export default async function TeamMemberPage({ params }: { params: Promise<{ slug: string }> }) {

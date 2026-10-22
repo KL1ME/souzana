@@ -62,10 +62,10 @@ export default function BiographyPreview({ version = "1", preview = true }: {
             <Link key={member.id} href={memberPath(member.id, preview ? version : undefined)} className="team-person" id={member.id} data-member-id={member.id}>
               <TeamPortrait member={member} priority={index === 0} />
               <div className="team-person-info">
-                <p className="team-category-label">{directoryCategories.find((item) => item.id === member.category)?.label}</p>
+                {member.category && <p className="team-category-label">{directoryCategories.find((item) => item.id === member.category)?.label}</p>}
                 <h2>{member.name}</h2>
-                <p className="team-person-role">{member.role}</p>
-                <span className="team-read-biography">Δείτε το βιογραφικό <ArrowRight size={16} aria-hidden="true" /></span>
+                {member.role && <p className="team-person-role">{member.role}</p>}
+                <span className="team-read-biography">{member.versions[version].length ? "Δείτε το βιογραφικό" : "Δείτε το προφίλ"} <ArrowRight size={16} aria-hidden="true" /></span>
               </div>
             </Link>
           ))}

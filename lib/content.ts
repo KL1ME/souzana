@@ -70,24 +70,8 @@ export type MediaSection = {
   items: MediaItem[]
 }
 
-export type ProfileEntry = {
-  title: string
-  period?: string
-  details: string[]
-}
-
 export type TeamProfile = {
-  eyebrow: string
   title: string
-  role: string
-  summary: string[]
-  biography?: string[]
-  awards?: { title: string; category: string; year: string; href: string }[]
-  experience: ProfileEntry[]
-  education: ProfileEntry[]
-  languages: string[]
-  skills: string[]
-  links: { label: string; href: string }[]
   image: ContentImage
 }
 
@@ -522,95 +506,10 @@ export const pages = {
   team: {
     eyebrow: "Πρόσωπα",
     title: "Η ομάδα μας",
-    description: "Προσωπική επίβλεψη, διεθνής εκπαίδευση και συντονισμένο δίκτυο συνεργατών.",
+    description: "Γνωρίστε τους ανθρώπους της εταιρείας μας.",
+    // Only the supplied name and photograph are published until a biography is provided.
     profile: {
-      eyebrow: "Προφίλ",
       title: "Σουζάνα Ι. Κλημεντίδη",
-      role: "Δικηγόρος – Managing Partner",
-      summary: [
-        "Managing Partner της εταιρείας με κεντρικό γραφείο στην Καλαμάτα και υποκατάστημα στην Αθήνα.",
-        "Εξειδίκευση σε αφερεγγυότητα, τραπεζικό, ναυτιλιακό και επενδυτικό δίκαιο.",
-        "Νομική σύμβουλος του Οικονομικού Επιμελητηρίου Ελλάδος.",
-        "Συχνές παρεμβάσεις σε τηλεόραση και ραδιόφωνο.",
-      ],
-      biography: [
-        "Η Σουζάνα Ι. Κλημεντίδη είναι διαχειρίστρια εταίρος της εταιρείας. Συνδυάζει την εμπειρία στο τραπεζικό, πτωχευτικό, εμπορικό και ναυτιλιακό δίκαιο με τη συμβουλευτική υποστήριξη επενδύσεων και χρηματοδοτήσεων, δίνοντας ιδιαίτερη έμφαση στην πρόληψη κινδύνων και την εξωδικαστική επίλυση διαφορών.",
-        "Η δραστηριότητά της περιλαμβάνει επίσης την προστασία θυμάτων ενδοοικογενειακής βίας και των δικαιωμάτων ανηλίκων. Μέσα από την αρθρογραφία, τις συνεντεύξεις και τις ομιλίες της, προσεγγίζει τόσο τις ανάγκες των επιχειρήσεων όσο και τα ζητήματα που επηρεάζουν την καθημερινότητα των οικογενειών.",
-      ],
-      awards: [
-        {
-          title: "Greek International Women Awards",
-          category: "Law and Political Sciences",
-          year: "2025",
-          href: "https://greekinternationalwomenawards.com/4th-giwa-winners/",
-        },
-      ],
-      experience: [
-        {
-          title: "Κλημεντίδη – Τσιλιβαράκη και Συνεργάτες",
-          period: "08/2014 – σήμερα",
-          details: [
-            "Ναυτιλιακό, εταιρικό, τραπεζικό και διεθνές δίκαιο.",
-            "Υποθέσεις εσωτερικής δικαιοδοσίας.",
-          ],
-        },
-        {
-          title: "Coral Shipping Corp",
-          period: "09/2012 – 08/2014",
-          details: [
-            "Εταιρικό, διεθνές και εμπορικό δίκαιο.",
-            "Ασφάλειες, συμβάσεις, απαιτήσεις και ναυλώσεις.",
-          ],
-        },
-        {
-          title: "D. Tsilivaraki & Partners Boutique Law Firm",
-          period: "01/2008 – 04/2011",
-          details: ["Ενασχόληση με αστικό και ποινικό δίκαιο."],
-        },
-      ],
-      education: [
-        {
-          title: "INSEAD",
-          period: "2021 – 2022",
-          details: [
-            "Executive Education – International Directors Programme (Corporate Governance).",
-          ],
-        },
-        {
-          title: "University of Oxford",
-          period: "2021",
-          details: ["Executive Education – Bank Governance."],
-        },
-        {
-          title: "University of Piraeus",
-          period: "2010 – 2012",
-          details: ["MSc in Shipping."],
-        },
-        {
-          title: "Εθνικό & Καποδιστριακό Πανεπιστήμιο Αθηνών",
-          period: "2004 – 2008",
-          details: ["Πτυχίο Νομικής."],
-        },
-      ],
-      languages: [
-        "Ελληνικά",
-        "Αγγλικά",
-        "Γαλλικά",
-        "Κινέζικα",
-        "Αραβικά",
-      ],
-      skills: [
-        "Αφερεγγυότητα",
-        "Τραπεζικό δίκαιο",
-        "Ναυτιλιακό δίκαιο",
-        "Επενδυτικό δίκαιο",
-      ],
-      links: [
-        {
-          label: "LinkedIn",
-          href: "https://www.linkedin.com/in/souzana-klimentidi-64868662",
-        },
-      ],
       image: {
         src: assetPath("/images/media/souzana-portrait.webp"),
         alt: "Πορτρέτο της Σουζάνας Ι. Κλημεντίδη",

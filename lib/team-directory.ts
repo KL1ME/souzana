@@ -2,31 +2,29 @@ import { pages, type ContentImage } from "@/lib/content"
 import { teamBiographies, type TeamBiography, type BiographyVersion } from "@/lib/team-biographies"
 
 export type DirectoryMember = Omit<TeamBiography, "category"> & {
-  category: TeamBiography["category"] | "partners"
+  category: TeamBiography["category"] | null
   image?: ContentImage
 }
 
 const profile = pages.team.profile
-const partnerBiography = (profile.biography ?? []).map((text) => ({ type: "paragraph" as const, text }))
 
 export const directoryMembers: DirectoryMember[] = [
   {
     id: "souzana-klimentidi",
     name: profile.title,
-    role: profile.role,
-    category: "partners",
+    role: "",
+    category: null,
     image: profile.image,
     roleNeedsConfirmation: false,
     hasTwoVersions: false,
-    source: "Existing firm profile",
-    versions: { "1": partnerBiography, "2": partnerBiography },
+    source: "Supplied name and photograph only; biography not provided",
+    versions: { "1": [], "2": [] },
   },
   ...teamBiographies,
 ]
 
 export const directoryCategories = [
   { id: "all", label: "Όλη η ομάδα" },
-  { id: "partners", label: "Διαχείριση" },
   { id: "lawyers", label: "Δικηγόροι" },
   { id: "trainees", label: "Ασκούμενοι" },
   { id: "administration", label: "Διοικητική υποστήριξη" },

@@ -11,7 +11,7 @@ export default function TeamPhotoGrid() {
         <div className="team-photo-grid">
           {directoryMembers.map((member, index) => (
             <Link key={member.id} href={memberPath(member.id)} className="team-photo-tile"
-              aria-label={`${member.name} · Δείτε το βιογραφικό`}>
+              aria-label={member.versions["1"].length ? `${member.name} · Δείτε το βιογραφικό` : member.name}>
               <TeamPortrait member={member} priority={index === 0}
                 sizes="(min-width: 1024px) 20vw, (min-width: 640px) 33vw, 50vw" />
               <span className="team-photo-name" aria-hidden="true">{member.name}</span>
