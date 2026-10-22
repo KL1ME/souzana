@@ -27,6 +27,14 @@ export default function TeamPage() {
             description={pages.team.description}
             headingLevel="h1"
           />
+          <div className="mt-8 rounded-2xl border border-accent/30 bg-background p-5 sm:p-6">
+            <p className="font-semibold">Νέα βιογραφικά ομάδας · Δύο εκδοχές προς επιλογή</p>
+            <p className="mt-2 text-sm text-muted-foreground">Δείτε και συγκρίνετε τις δύο μορφές παρουσίασης των 21 βιογραφικών.</p>
+            <div className="mt-4 flex flex-wrap gap-3">
+              <Link href="/team/version-1" className="rounded-full bg-[#2d2b6d] px-5 py-3 text-sm font-medium text-white">1η εκδοχή · Κείμενο</Link>
+              <Link href="/team/version-2" className="rounded-full border border-[#2d2b6d]/30 px-5 py-3 text-sm font-medium text-[#2d2b6d]">2η εκδοχή · Λίστες</Link>
+            </div>
+          </div>
         </Container>
       </section>
       <section className="py-16 sm:py-24">
