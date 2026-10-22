@@ -2,6 +2,7 @@ import type { IconName } from "@/lib/icons"
 import { assetPath } from "@/lib/asset"
 import { driveMediaSections } from "@/lib/drive-media"
 import { drivePosts } from "@/lib/drive-posts"
+import { teamBiographies, biographyInitials } from "@/lib/team-biographies"
 
 export type ContentImage = {
   src: string
@@ -396,38 +397,13 @@ export const practiceAreas: PracticeArea[] = [
   },
 ]
 
-export const teamMembers: TeamMember[] = [
-  {
-    name: "Ναταλία Θεοδώρου",
-    title: "Συνεργάτιδα",
-    bullets: [
-      "Εταιρικό & εμπορικό δίκαιο",
-      "Συμβάσεις και εταιρική συμμόρφωση",
-      "Ελληνικά, Αγγλικά",
-    ],
-    initials: "ΝΘ",
-  },
-  {
-    name: "Ιωάννα Λύκου",
-    title: "Συνεργάτιδα",
-    bullets: ["Αστικό δίκαιο", "Διαφορές & διαμεσολάβηση", "Ελληνικά, Αγγλικά"],
-    initials: "ΙΛ",
-    image: {
-      src: assetPath("/images/team-3.jpg"),
-      alt: "Πορτρέτο της Ιωάννας Λύκου",
-    },
-  },
-  {
-    name: "Ειρήνη Καραλή",
-    title: "Συνεργάτιδα",
-    bullets: ["Ακίνητα", "Μισθώσεις", "Ελληνικά, Αγγλικά"],
-    initials: "ΕΚ",
-    image: {
-      src: assetPath("/images/team-4.jpg"),
-      alt: "Πορτρέτο της Ειρήνης Καραλή",
-    },
-  },
-]
+// The supplied biographies are the single source for the current roster.
+export const teamMembers: TeamMember[] = teamBiographies.map((member) => ({
+  name: member.name,
+  title: member.role,
+  initials: biographyInitials(member.name),
+  bullets: member.versions["1"].flatMap((block) => block.type === "paragraph" ? [block.text] : block.items),
+}))
 
 export const posts: Post[] = [
   ...drivePosts,
