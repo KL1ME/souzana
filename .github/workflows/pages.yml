@@ -35,6 +35,8 @@ jobs:
         env:
           NEXT_PUBLIC_THEMIS_API_URL: ${{ vars.THEMIS_API_URL || 'https://themis-api-test.onrender.com/api/themis' }}
         run: GITHUB_PAGES=true npm run build
+      - name: Audit team pages and retired layouts
+        run: python3 scripts/audit-team-pages.py
       - name: Disable Jekyll
         run: touch out/.nojekyll
       - name: Upload artifact

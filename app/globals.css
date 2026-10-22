@@ -1,42 +1,11 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
-/* Unified team directory and biography pages. */
-.team-directory-page, .team-profile-page { background: #fff; }
-body:has(.team-directory-page, .team-profile-page) .themis-launcher { display: none; }
-.team-directory-hero { padding: 3.25rem 0 0; background: #f8f7f4; border-bottom: 1px solid #e6e3db; }
+/* Shared portrait grid and biography pages. */
+body:has(.team-profile-page) .themis-launcher { display: none; }
 .team-eyebrow { color: #856b32; font-size: .65rem; letter-spacing: .16em; text-transform: uppercase; font-weight: 600; }
-.team-directory-hero h1 { margin-top: .8rem; font-family: Georgia, serif; font-size: clamp(2.5rem, 4vw, 3.8rem); line-height: 1.2; letter-spacing: -.035em; color: #292723; }
-.team-directory-intro { max-width: 40rem; margin-top: 1.2rem; color: #635f58; font-size: .95rem; line-height: 1.85; }
-.team-version-bar { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-top: 2rem; border-top: 1px solid #ded9ce; font-size: .75rem; }
-.team-version-bar > p { color: #71695d; }
-.team-version-bar nav { display: flex; gap: 1.5rem; }
-.team-version-bar a { padding: 1.1rem 0; border-bottom: 2px solid transparent; color: #625c52; }
-.team-version-bar a[aria-current] { border-color: #b08d3b; color: #292723; }
-.team-directory-content { padding-top: 2.5rem; padding-bottom: 5rem; }
-.team-directory-tools { display: flex; align-items: center; justify-content: space-between; gap: 1.5rem; }
-.team-categories { display: flex; flex-wrap: wrap; gap: .5rem; }
-.team-categories button { display: flex; align-items: center; gap: .5rem; cursor: pointer; background: white; border: 1px solid #dedbd3; padding: .65rem .8rem; font-size: .72rem; color: #635d54; }
-.team-categories button span { font-size: .65rem; }
-.team-categories button[aria-pressed="true"] { border-color: #b08d3b; background: #f5f0e4; color: #332b1c; }
-.team-search { display: flex; gap: .6rem; align-items: center; color: #756d61; border-bottom: 1px solid #aaa08e; padding: .6rem 0; flex-shrink: 0; }
-.team-search input { width: 11rem; min-width: 0; background: transparent; font-size: .8rem; }
-.team-results { margin: 1.25rem 0 1.75rem; font-size: .75rem; color: #746b5f; }
-.team-roster { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem 2rem; }
-.team-person { display: flex; align-items: center; gap: 1.3rem; padding: 1rem; border: 1px solid #e9e5dd; transition: background .2s, border-color .2s; scroll-margin-top: calc(var(--header-height) + 1.5rem); }
-.team-person:hover { background: #faf8f3; border-color: #c3ab74; }
 .team-portrait { position: relative; width: 96px; height: 120px; flex-shrink: 0; overflow: hidden; background: #f0ece3; display: flex; align-items: center; justify-content: center; }
 .team-portrait > span { font-family: Georgia, serif; font-size: 2rem; color: #8a754d; letter-spacing: .03em; }
-.team-person-info { min-width: 0; }
-.team-category-label { font-size: .59rem; color: #786e5f; margin-bottom: .5rem; text-transform: uppercase; letter-spacing: .09em; }
-.team-person h2 { font-family: Georgia, serif; color: #292723; font-size: 1.3rem; line-height: 1.35; overflow-wrap: anywhere; }
-.team-person-role { margin-top: .45rem; color: #6d665d; font-size: .73rem; line-height: 1.7; }
-.team-read-biography { display: inline-flex; align-items: center; gap: .65rem; color: #735a26; font-size: .68rem; margin-top: .8rem; }
-.team-person:hover .team-read-biography { text-decoration: underline; text-underline-offset: 4px; }
-.team-empty { padding: 2rem; border: 1px solid #e9e5dd; }
-.team-empty h2 { font-size: 1.3rem; }
-.team-empty p { margin-top: .75rem; font-size: .9rem; }
-.team-empty button { cursor: pointer; margin-top: 1rem; text-decoration: underline; text-underline-offset: 4px; }
 .team-profile-page { padding: 2rem 0 5rem; }
 .team-back-link { display: inline-flex; align-items: center; gap: .6rem; font-size: .78rem; color: #75613c; }
 .team-back-link:hover { text-decoration: underline; text-underline-offset: 4px; }
@@ -45,7 +14,6 @@ body:has(.team-directory-page, .team-profile-page) .themis-launcher { display: n
 .team-profile-identity .team-portrait { width: 100%; height: auto; aspect-ratio: 4 / 5; }
 .team-profile-identity .team-portrait > span { font-size: 4rem; }
 .team-profile-identity .team-portrait img { object-position: 50% 30%; }
-.team-profile-external { display: inline-flex; align-items: center; gap: .5rem; font-size: .8rem; text-decoration: underline; text-underline-offset: 4px; margin-top: 1rem; }
 .team-biography { min-width: 0; }
 .team-biography h1 { font-family: Georgia, serif; color: #292723; margin-top: .8rem; font-size: clamp(2rem, 3.6vw, 3rem); line-height: 1.3; letter-spacing: -.03em; }
 .team-profile-role { font-size: .95rem; color: #72685a; margin-top: .8rem; line-height: 1.75; }
@@ -60,13 +28,6 @@ body:has(.team-directory-page, .team-profile-page) .themis-launcher { display: n
 .team-biography-copy li { padding-left: .2rem; }
 .team-biography-copy li + li { margin-top: .65rem; }
 .team-biography-copy li::marker { color: #92733a; }
-.team-partner-details { color: #524d46; font-size: .9rem; line-height: 1.85; }
-.team-partner-details section { margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid #e1dbcf; }
-.team-partner-details h2 { font-family: Georgia, serif; font-size: 1.65rem; color: #292723; margin-bottom: 1rem; }
-.team-partner-details h3 { color: #3f382c; font-weight: 500; }
-.team-partner-details ul { list-style: disc; padding-left: 1.2rem; }
-.team-career-item + .team-career-item { margin-top: 1.4rem; }
-.team-career-period { color: #817767; font-size: .75rem; margin-bottom: .4rem; }
 .team-back-bottom { margin-top: 2.5rem; border-top: 1px solid #e1dbcf; padding-top: 1.5rem; width: 100%; }
 .team-home-person .team-portrait { width: 100%; height: auto; aspect-ratio: 4 / 5; }
 .team-home-person .team-portrait > span { font-size: 3rem; }
@@ -85,20 +46,8 @@ body:has(.team-photo-page) .themis-launcher { display: none; }
   .team-photo-page { padding-top: 1.5rem; }
   .team-photo-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .6rem; }
 }
-.team-directory-page a:focus-visible, .team-directory-page button:focus-visible, .team-directory-page input:focus-visible,
 .team-profile-page a:focus-visible { outline: 2px solid #b08d3b; outline-offset: 5px; }
-@media (max-width: 1100px) {
-  .team-directory-tools { flex-direction: column; align-items: flex-start; }
-}
 @media (max-width: 760px) {
-  .team-directory-hero { padding-top: 2rem; }
-  .team-version-bar { align-items: flex-start; flex-direction: column; gap: 0; padding-top: 1rem; }
-  .team-directory-content { padding-top: 1.5rem; }
-  .team-roster { grid-template-columns: 1fr; gap: .8rem; }
-  .team-person { padding: .8rem; gap: 1rem; }
-  .team-person h2 { font-size: 1.2rem; }
-  .team-search { width: 100%; }
-  .team-search input { width: 100%; }
   .team-profile-layout { grid-template-columns: 1fr; gap: 1.5rem; margin-top: 1.5rem; }
   .team-profile-identity { position: static; display: flex; align-items: flex-end; gap: 1.5rem; }
   .team-profile-identity .team-portrait { width: 120px; }

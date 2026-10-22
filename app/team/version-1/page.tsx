@@ -1,4 +1,4 @@
-import BiographyPreview from "@/components/team/BiographyPreview"
+import TeamPhotoGrid from "@/components/team/TeamPhotoGrid"
 import { createPageMetadata } from "@/lib/metadata"
 
 export const metadata = {
@@ -7,5 +7,5 @@ export const metadata = {
 }
 
 export default function TeamVersionOne() {
-  return <BiographyPreview version="1" />
+  return <TeamPhotoGrid version="1" />
 }
