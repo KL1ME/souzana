@@ -19,7 +19,7 @@ export type TeamBiography = {
 
 // Greek biographies sourced from the supplied DOCX files.
 // Requested editorial variants reformat the same supplied facts.
-// Single-version biographies intentionally use the same blocks in both previews.
+// Every biography now has a distinct second version with lists.
 export const teamBiographies = source as TeamBiography[]
 
 export function biographyInitials(name: string) {

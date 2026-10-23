@@ -18,6 +18,10 @@ RETIRED = (
     "team-partner-details", "bio-review-bar", "bio-articles",
 )
 BIOGRAPHIES = json.loads((ROOT / "lib/team-biographies.json").read_text())
+for member in BIOGRAPHIES:
+    assert member["hasTwoVersions"], f"Missing second version: {member['id']}"
+    assert member["versions"]["1"] != member["versions"]["2"], f"Duplicate versions: {member['id']}"
+    assert any(block["type"] == "list" for block in member["versions"]["2"]), f"Second version needs lists: {member['id']}"
 MEMBER_IDS = ["souzana-klimentidi"] + [member["id"] for member in BIOGRAPHIES]
 
 

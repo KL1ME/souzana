@@ -14,10 +14,10 @@ export default function TeamPreview() {
           title={home.teamPreview.title}
           description={home.teamPreview.description}
         />
-        <div className="scrollbar-none -mx-5 flex snap-x snap-mandatory gap-4 overflow-x-auto px-5 pb-2 sm:mx-0 sm:grid sm:grid-cols-2 sm:gap-6 sm:overflow-visible sm:px-0 sm:pb-0 lg:grid-cols-4">
+        <div className="grid grid-cols-2 gap-x-4 gap-y-8 sm:gap-6 lg:grid-cols-4">
           {directoryMembers.slice(0, 4).map((member) => (
-            <Link key={member.id} href={memberPath(member.id)} className="team-home-person group block min-w-[76vw] snap-start space-y-4 sm:min-w-0">
-              <TeamPortrait member={member} />
+            <Link key={member.id} href={memberPath(member.id)} className="team-home-person group block min-w-0 space-y-4">
+              <TeamPortrait member={member} sizes="(min-width: 1200px) 270px, (min-width: 1024px) 25vw, 50vw" />
               <div>
                 <h3 className="text-base font-semibold text-foreground">
                   {member.name}

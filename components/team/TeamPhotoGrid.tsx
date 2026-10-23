@@ -14,7 +14,7 @@ export default function TeamPhotoGrid({ version }: { version?: BiographyVersion 
             <Link key={member.id} href={memberPath(member.id, version)} className="team-photo-tile"
               aria-label={member.versions["1"].length ? `${member.name} · Δείτε το βιογραφικό` : member.name}>
               <TeamPortrait member={member} priority={index === 0}
-                sizes="(min-width: 1024px) 20vw, (min-width: 640px) 33vw, 50vw" />
+                sizes="(min-width: 1200px) 224px, (min-width: 768px) 25vw, (min-width: 480px) 33vw, 50vw" />
               <span className="team-photo-name" aria-hidden="true">{member.name}</span>
             </Link>
           ))}

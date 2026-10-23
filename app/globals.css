@@ -9,7 +9,7 @@ body:has(.team-profile-page) .themis-launcher { display: none; }
 .team-profile-page { padding: 2rem 0 5rem; }
 .team-back-link { display: inline-flex; align-items: center; gap: .6rem; font-size: .78rem; color: #75613c; }
 .team-back-link:hover { text-decoration: underline; text-underline-offset: 4px; }
-.team-profile-layout { display: grid; grid-template-columns: 235px minmax(0, 1fr); gap: 4rem; align-items: start; margin-top: 2.5rem; }
+.team-profile-layout { display: grid; grid-template-columns: clamp(160px, 22vw, 235px) minmax(0, 1fr); gap: clamp(2rem, 5vw, 4rem); align-items: start; margin-top: 2.5rem; }
 .team-profile-identity { position: sticky; top: calc(var(--header-height) + 2rem); }
 .team-profile-identity .team-portrait { width: 100%; height: auto; aspect-ratio: 4 / 5; }
 .team-profile-identity .team-portrait > span { font-size: 4rem; }
@@ -34,23 +34,21 @@ body:has(.team-profile-page) .themis-launcher { display: none; }
 .team-photo-page { padding: 2.5rem 0 4rem; background: #fff; }
 body:has(.team-photo-page) .themis-launcher { display: none; }
 .team-photo-page h1 { margin-bottom: 1.75rem; font-family: Georgia, serif; font-size: clamp(2rem, 3.5vw, 3rem); color: #292723; letter-spacing: -.03em; }
-.team-photo-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: .75rem; }
+.team-photo-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, clamp(7.5rem, 22vw, 13rem)), 1fr)); gap: clamp(.6rem, 1.2vw, 1rem); }
 .team-photo-tile { position: relative; display: block; min-width: 0; }
 .team-photo-tile .team-portrait { width: 100%; height: auto; aspect-ratio: 4 / 5; }
 .team-photo-tile .team-portrait > span { font-size: clamp(2.5rem, 4vw, 4rem); }
 .team-photo-name { position: absolute; inset: auto 0 0; padding: 1rem .75rem; background: rgb(41 39 35 / 88%); color: white; font-size: .75rem; line-height: 1.6; opacity: 0; transition: opacity .15s; pointer-events: none; }
 .team-photo-tile:hover .team-photo-name, .team-photo-tile:focus-visible .team-photo-name { opacity: 1; }
 .team-photo-tile:focus-visible { outline: 2px solid #b08d3b; outline-offset: 4px; }
-@media (max-width: 1023px) { .team-photo-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 @media (max-width: 639px) {
   .team-photo-page { padding-top: 1.5rem; }
-  .team-photo-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .6rem; }
 }
 .team-profile-page a:focus-visible { outline: 2px solid #b08d3b; outline-offset: 5px; }
 @media (max-width: 760px) {
   .team-profile-layout { grid-template-columns: 1fr; gap: 1.5rem; margin-top: 1.5rem; }
   .team-profile-identity { position: static; display: flex; align-items: flex-end; gap: 1.5rem; }
-  .team-profile-identity .team-portrait { width: 120px; }
+  .team-profile-identity .team-portrait { width: clamp(128px, 30vw, 200px); max-width: 100%; }
   .team-profile-identity .team-portrait > span { font-size: 2.5rem; }
   .team-biography-copy { font-size: .9rem; }
 }
@@ -270,6 +268,20 @@ body:has(.team-photo-page) .themis-launcher { display: none; }
   to {
     transform: scale(1);
   }
+}
+
+/* Keep the whole architectural image visible on phones and portrait tablets. */
+@media (max-width: 1023px) {
+  .home-header { margin-bottom: 0; }
+  .home-header-overlay { background: var(--background); backdrop-filter: none; }
+  .home-header-overlay .header-nav-link,
+  .home-header-overlay .header-menu-trigger { color: var(--foreground); }
+  .home-header-overlay .header-logo { filter: none; }
+  .home-header-overlay .header-menu-trigger:hover { background: var(--muted); }
+  .hero-graphic { height: auto; aspect-ratio: 1672 / 941; }
+  .hero-image { object-fit: contain; animation: none; }
+  .hero-shade { background: linear-gradient(transparent 65%, rgb(17 19 21 / 25%)); }
+  .hero-scroll { width: 2rem; height: 2rem; bottom: .5rem; }
 }
 
 @media (prefers-reduced-motion: reduce) {
