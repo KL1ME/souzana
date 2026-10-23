@@ -17,7 +17,8 @@ export type TeamBiography = {
   versions: Record<BiographyVersion, BiographyBlock[]>
 }
 
-// Greek text and paragraph/list structure transcribed from the supplied DOCX files.
+// Greek biographies sourced from the supplied DOCX files.
+// Requested editorial variants reformat the same supplied facts.
 // Single-version biographies intentionally use the same blocks in both previews.
 export const teamBiographies = source as TeamBiography[]
 
