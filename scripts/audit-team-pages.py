@@ -103,7 +103,7 @@ def validate(documents, label):
                     expected.extend(("li", normalized(item)) for item in block["items"])
             route = base + member["id"] + "/"
             assert parsed[route].blocks == expected, f"Source biography changed at {route}"
-    print(f"PASS {label}: {len(documents)} HTML pages; 4 grids of 22 portraits; 66 profile routes; 63 source biographies checked; no retired UI.")
+    print(f"PASS {label}: {len(documents)} HTML pages; {len(LANDINGS)} grids of {len(MEMBER_IDS)} portraits; {3 * len(MEMBER_IDS)} profile routes; {3 * len(BIOGRAPHIES)} source biographies checked; no retired UI.")
     return set().union(*(page.assets for page in parsed.values()))
 
 
