@@ -55,6 +55,24 @@ body:has(.team-photo-page) .themis-launcher { display: none; }
   .team-photo-page { padding-top: 1.5rem; }
 }
 .team-profile-page a:focus-visible { outline: 2px solid #b08d3b; outline-offset: 5px; }
+@media screen and (min-width: 901px) {
+  body:has(.team-profile-with-photo) > header {
+    margin-bottom: calc(-1 * var(--header-height));
+    border-bottom-width: 0;
+    background: linear-gradient(to right, var(--background) 50%, transparent 50%);
+    backdrop-filter: none;
+  }
+  body:has(.team-profile-with-photo) > header > div { max-width: none; padding-inline: clamp(2rem, 5vw, 7rem); }
+  body:has(.team-profile-with-photo) > header nav { padding: .8rem 1rem; background: rgb(255 255 255 / 94%); border: 1px solid rgb(176 141 59 / 25%); }
+  .team-profile-with-photo { padding: 0; }
+  .team-profile-with-photo .team-profile-container { max-width: none; padding: 0; }
+  .team-profile-with-photo .team-profile-layout { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0; margin-top: 0; }
+  .team-profile-with-photo .team-back-top { position: absolute; top: calc(var(--header-height) + 2rem); left: clamp(2rem, 5vw, 7rem); z-index: 2; }
+  .team-profile-with-photo .team-biography { padding: calc(var(--header-height) + 5rem) clamp(2rem, 5vw, 7rem) 4rem; }
+  .team-profile-photo { top: 0; align-self: start; height: 100svh; }
+  .team-profile-photo .team-portrait { height: 100%; max-height: none; aspect-ratio: auto; }
+  .team-profile-photo .team-portrait img { object-position: 50% 20%; }
+}
 @media (max-width: 900px) {
   .team-profile-layout, .team-profile-with-photo .team-profile-layout { grid-template-columns: 1fr; grid-template-areas: "portrait" "copy"; gap: 1.5rem; margin-top: 1.5rem; }
   .team-profile-identity { position: relative; top: auto; }
