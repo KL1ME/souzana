@@ -1,5 +1,7 @@
 import { pages, type ContentImage } from "@/lib/content"
 import { teamBiographies, type TeamBiography, type BiographyVersion } from "@/lib/team-biographies"
+import { assetPath } from "@/lib/asset"
+import portraits from "@/lib/team-portraits.json"
 
 export type DirectoryMember = Omit<TeamBiography, "category"> & {
   category: TeamBiography["category"] | null
@@ -7,6 +9,7 @@ export type DirectoryMember = Omit<TeamBiography, "category"> & {
 }
 
 const profile = pages.team.profile
+const teamPortraits: Record<string, ContentImage> = portraits
 
 export const directoryMembers: DirectoryMember[] = [
   {
@@ -20,7 +23,13 @@ export const directoryMembers: DirectoryMember[] = [
     source: "Supplied name and photograph only; biography not provided",
     versions: { "1": [], "2": [] },
   },
-  ...teamBiographies,
+  ...teamBiographies.map((member) => {
+    const portrait = teamPortraits[member.id]
+    return {
+      ...member,
+      image: portrait ? { ...portrait, src: assetPath(portrait.src) } : undefined,
+    }
+  }),
 ]
 
 export const directoryCategories = [

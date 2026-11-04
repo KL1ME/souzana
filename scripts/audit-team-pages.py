@@ -3,6 +3,7 @@ import argparse
 from concurrent.futures import ThreadPoolExecutor
 from html.parser import HTMLParser
 import json
+import hashlib
 from pathlib import Path
 import re
 from urllib.parse import urlsplit
@@ -23,6 +24,10 @@ for member in BIOGRAPHIES:
     assert member["versions"]["1"] != member["versions"]["2"], f"Duplicate versions: {member['id']}"
     assert any(block["type"] == "list" for block in member["versions"]["2"]), f"Second version needs lists: {member['id']}"
 MEMBER_IDS = ["souzana-klimentidi"] + [member["id"] for member in BIOGRAPHIES]
+PORTRAITS = json.loads((ROOT / "lib/team-portraits.json").read_text())
+assert set(PORTRAITS) <= set(MEMBER_IDS), "Portrait without a matching biography"
+PORTRAIT_PATHS = {member_id: BASE_PATH + portrait["src"] for member_id, portrait in PORTRAITS.items()}
+PORTRAIT_PATHS["souzana-klimentidi"] = BASE_PATH + "/images/media/souzana-portrait.webp"
 
 
 def normalized(text):
@@ -33,6 +38,7 @@ class Page(HTMLParser):
     def __init__(self, html):
         super().__init__()
         self.tiles, self.links, self.assets, self.classes = [], [], set(), set()
+        self.images, self.tile_images, self.current_tile = set(), {}, None
         self.blocks, self.copy_depth, self.current, self.parts = [], 0, None, []
         self.feed(html)
 
@@ -44,6 +50,13 @@ class Page(HTMLParser):
             self.links.append(attrs.get("href", ""))
             if "team-photo-tile" in classes:
                 self.tiles.append(attrs["href"])
+                self.current_tile = attrs["href"]
+                self.tile_images[self.current_tile] = []
+        if tag == "img":
+            src = attrs.get("src", "")
+            self.images.add(src)
+            if self.current_tile:
+                self.tile_images[self.current_tile].append(src)
         if tag == "script" and attrs.get("src"):
             self.assets.add(attrs["src"])
         if tag == "link" and attrs.get("rel") == "stylesheet":
@@ -60,6 +73,8 @@ class Page(HTMLParser):
             self.parts.append(text)
 
     def handle_endtag(self, tag):
+        if tag == "a":
+            self.current_tile = None
         if self.current == tag:
             self.blocks.append((tag, normalized("".join(self.parts))))
             self.current = None
@@ -92,6 +107,9 @@ def validate(documents, label):
         base = route if route in ("/team/version-1/", "/team/version-2/") else "/team/"
         expected = [BASE_PATH + base + member_id + "/" for member_id in MEMBER_IDS]
         assert page.tiles == expected, f"Wrong portrait grid or version links in {route}"
+        for member_id, href in zip(MEMBER_IDS, expected):
+            portrait = PORTRAIT_PATHS.get(member_id)
+            assert page.tile_images[href] == ([portrait] if portrait else []), f"Wrong portrait for {member_id} in {route}"
     for base, version in (("/team/", "1"), ("/team/version-1/", "1"), ("/team/version-2/", "2")):
         souzana = documents[base + "souzana-klimentidi/"]
         assert "souzana-portrait.webp" in souzana
@@ -107,6 +125,8 @@ def validate(documents, label):
                     expected.extend(("li", normalized(item)) for item in block["items"])
             route = base + member["id"] + "/"
             assert parsed[route].blocks == expected, f"Source biography changed at {route}"
+            if member["id"] in PORTRAIT_PATHS:
+                assert PORTRAIT_PATHS[member["id"]] in parsed[route].images, f"Missing supplied portrait in {route}"
     print(f"PASS {label}: {len(documents)} HTML pages; {len(LANDINGS)} grids of {len(MEMBER_IDS)} portraits; {3 * len(MEMBER_IDS)} profile routes; {3 * len(BIOGRAPHIES)} source biographies checked; no retired UI.")
     return set().union(*(page.assets for page in parsed.values()))
 
@@ -132,6 +152,8 @@ def main():
     for path in assets:
         no_retired(path.read_text(), path.relative_to(EXPORT))
     assert not (ROOT / "components/team/BiographyPreview.tsx").exists()
+    for portrait in PORTRAITS.values():
+        assert (ROOT / "public" / portrait["src"].lstrip("/")).is_file(), f"Missing portrait: {portrait['src']}"
     print(f"PASS local bundles: {len(assets)} JavaScript/CSS files contain no retired team UI.")
     if args.live:
         site = args.live.rstrip("/")
@@ -145,6 +167,13 @@ def main():
             for url, text in zip(urls, pool.map(fetch, urls)):
                 no_retired(text, url)
         print(f"PASS published bundles: {len(urls)} JavaScript/CSS files contain no retired team UI.")
+        for portrait in PORTRAITS.values():
+            path = portrait["src"]
+            with urlopen(Request(site + path, headers={"Cache-Control": "no-cache"}), timeout=30) as response:
+                actual = response.read()
+            expected = (ROOT / "public" / path.lstrip("/")).read_bytes()
+            assert hashlib.sha256(actual).digest() == hashlib.sha256(expected).digest(), f"Published portrait differs: {path}"
+        print(f"PASS published portraits: {len(PORTRAITS)} supplied photographs match the local assets.")
 
 
 if __name__ == "__main__":
