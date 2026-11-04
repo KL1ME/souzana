@@ -31,7 +31,6 @@ body:has(.team-profile-page) .themis-launcher { display: none; }
 .team-biography-copy li { padding-left: .2rem; }
 .team-biography-copy li + li { margin-top: .65rem; }
 .team-biography-copy li::marker { color: #92733a; }
-.team-back-bottom { margin-top: 2.5rem; border-top: 1px solid #e1dbcf; padding-top: 1.5rem; width: 100%; }
 .team-home-person .team-portrait { width: 100%; height: auto; aspect-ratio: 4 / 5; }
 .team-home-person .team-portrait > span { font-size: 3rem; }
 .team-photo-page { padding: 2.5rem 0 4rem; background: #fff; }

@@ -47,7 +47,6 @@ export default function BiographyDetail({ id, version }: { id: string; version?:
                 </div>
               </>
             )}
-            <Link className="team-back-link team-back-bottom" href={directoryPath(version)}><ArrowLeft size={16} aria-hidden="true" /> Επιστροφή σε όλη την ομάδα</Link>
           </article>
         </div>
       </Container>
