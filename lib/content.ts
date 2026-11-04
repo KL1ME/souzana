@@ -141,7 +141,7 @@ export const home = {
     },
   },
   teamPreview: {
-    eyebrow: "Πρόσωπα",
+    eyebrow: "Ομάδα",
     title: "Η ομάδα πίσω από κάθε υπόθεση",
     description:
       "Η συνεργασία και η συμπληρωματικότητα των γνώσεων και της εμπειρίας μας επιτρέπουν την αποτελεσματική αντιμετώπιση σύνθετων και απαιτητικών νομικών ζητημάτων.",
@@ -504,7 +504,7 @@ export const pages = {
     ],
   },
   team: {
-    eyebrow: "Πρόσωπα",
+    eyebrow: "Ομάδα",
     title: "Η ομάδα μας",
     description: "Γνωρίστε τους ανθρώπους της εταιρείας μας.",
     // Only the supplied name and photograph are published until a biography is provided.
