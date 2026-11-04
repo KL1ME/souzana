@@ -36,8 +36,8 @@ export default function BiographyDetail({ id, version }: { id: string; version?:
             {hasBiography && (
               <>
                 <nav className="team-biography-versions" aria-label="Μορφή βιογραφικού">
-                  <Link href={memberPath(member.id, "1")} aria-current={selectedVersion === "1" ? "page" : undefined}>1η εκδοχή · Κείμενο</Link>
-                  <Link href={memberPath(member.id, "2")} aria-current={selectedVersion === "2" ? "page" : undefined}>2η εκδοχή · Λίστες</Link>
+                  <Link href={`${memberPath(member.id, "1")}#profile-information`} aria-current={selectedVersion === "1" ? "page" : undefined}>1η εκδοχή · Κείμενο</Link>
+                  <Link href={`${memberPath(member.id, "2")}#profile-information`} aria-current={selectedVersion === "2" ? "page" : undefined}>2η εκδοχή · Λίστες</Link>
                 </nav>
                 {!member.hasTwoVersions && <p className="team-common-text">Το βιογραφικό αυτό είναι κοινό και στις δύο εκδοχές.</p>}
                 <div className="team-biography-copy">
