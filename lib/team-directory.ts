@@ -3,13 +3,15 @@ import { teamBiographies, type TeamBiography, type BiographyVersion } from "@/li
 import { assetPath } from "@/lib/asset"
 import portraits from "@/lib/team-portraits.json"
 
+type TeamImage = ContentImage & { galleryScale?: number }
+
 export type DirectoryMember = Omit<TeamBiography, "category"> & {
   category: TeamBiography["category"] | null
-  image?: ContentImage
+  image?: TeamImage
 }
 
 const profile = pages.team.profile
-const teamPortraits: Record<string, ContentImage> = portraits
+const teamPortraits: Record<string, TeamImage> = portraits
 
 export const directoryMembers: DirectoryMember[] = [
   {

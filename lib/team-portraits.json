@@ -1,30 +1,37 @@
 {
   "despoina-tsilivaraki-klimentidi": {
     "src": "/images/team/despoina-tsilivaraki-klimentidi-original.jpg",
-    "alt": "Πορτρέτο: Δέσποινα Δ. Τσιλιβαράκη-Κλημεντίδη"
+    "alt": "Πορτρέτο: Δέσποινα Δ. Τσιλιβαράκη-Κλημεντίδη",
+    "galleryScale": 1.8
   },
   "alexandra-tsalatsani": {
     "src": "/images/team/alexandra-tsalatsani-original.jpg",
-    "alt": "Πορτρέτο: Αλεξάνδρα Τσαλατσάνη"
+    "alt": "Πορτρέτο: Αλεξάνδρα Τσαλατσάνη",
+    "galleryScale": 1.1
   },
   "vasilis-baladimas": {
     "src": "/images/team/vasilis-baladimas-original.jpg",
-    "alt": "Πορτρέτο: Βασίλης Μπαλαδήμας"
+    "alt": "Πορτρέτο: Βασίλης Μπαλαδήμας",
+    "galleryScale": 1.8
   },
   "dimitra-kalambaliki": {
     "src": "/images/team/dimitra-kalambaliki-original.jpg",
-    "alt": "Πορτρέτο: Δήμητρα Καλαμπαλίκη"
+    "alt": "Πορτρέτο: Δήμητρα Καλαμπαλίκη",
+    "galleryScale": 1.1
   },
   "dimitra-rahouti": {
     "src": "/images/team/dimitra-rahouti-original.jpg",
-    "alt": "Πορτρέτο: Δήμητρα Ραχούτη"
+    "alt": "Πορτρέτο: Δήμητρα Ραχούτη",
+    "galleryScale": 1.1
   },
   "leonidia-tzimerkioti": {
     "src": "/images/team/leonidia-tzimerkioti-original.jpg",
-    "alt": "Πορτρέτο: Λεωνιδία Τζιμερκιώτη"
+    "alt": "Πορτρέτο: Λεωνιδία Τζιμερκιώτη",
+    "galleryScale": 1.1
   },
   "margarita-iatropoulou": {
     "src": "/images/team/margarita-iatropoulou-original.jpg",
-    "alt": "Πορτρέτο: Μαργαρίτα Ιατροπούλου"
+    "alt": "Πορτρέτο: Μαργαρίτα Ιατροπούλου",
+    "galleryScale": 1.3
   }
 }
