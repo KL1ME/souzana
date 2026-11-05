@@ -12,10 +12,14 @@ export default function TeamPhotoGrid({ version }: { version?: BiographyVersion 
         <div className="team-photo-grid">
           {directoryMembers.map((member, index) => (
             <Link key={member.id} href={memberPath(member.id, version)} className="team-photo-tile"
-              aria-label={member.versions["1"].length ? `${member.name} · Δείτε το βιογραφικό` : member.name}>
+              aria-label={[member.name, member.role, member.roleNeedsConfirmation ? "Η ιδιότητα αναμένει επιβεβαίωση" : "", member.versions["1"].length ? "Δείτε το βιογραφικό" : ""].filter(Boolean).join(" · ")}>
               <TeamPortrait member={member} priority={index === 0} gallery
                 sizes="(min-width: 1200px) 280px, (min-width: 640px) 33vw, 50vw" />
-              <span className="team-photo-name" aria-hidden="true">{member.name}</span>
+              <span className="team-photo-caption" aria-hidden="true">
+                <span className="team-photo-name">{member.name}</span>
+                {member.role && <span className="team-photo-role">{member.role}</span>}
+                {member.roleNeedsConfirmation && <span className="team-photo-pending">Η ιδιότητα αναμένει επιβεβαίωση</span>}
+              </span>
             </Link>
           ))}
         </div>
