@@ -33,5 +33,40 @@
     "src": "/images/team/margarita-iatropoulou-original.jpg",
     "alt": "Πορτρέτο: Μαργαρίτα Ιατροπούλου",
     "galleryScale": 1.3
+  },
+  "theodora-bitsikokou": {
+    "src": "/images/team/theodora-bitsikokou-original.png",
+    "alt": "Πορτρέτο: Θεοδώρα Μπιτσικώκου",
+    "galleryScale": 1.1
+  },
+  "ioanna-tzolou": {
+    "src": "/images/team/ioanna-tzolou-original.jpg",
+    "alt": "Πορτρέτο: Ιωάννα Τζόλου",
+    "galleryScale": 1.1
+  },
+  "konstantina-krinidi": {
+    "src": "/images/team/konstantina-krinidi-original.jpg",
+    "alt": "Πορτρέτο: Κωνσταντίνα Κρηνίδη",
+    "galleryScale": 1.8
+  },
+  "maria-theodorou": {
+    "src": "/images/team/maria-theodorou-original.png",
+    "alt": "Πορτρέτο: Μαρία Θεοδώρου",
+    "galleryScale": 1.1
+  },
+  "platon-papadatos-kalos": {
+    "src": "/images/team/platon-papadatos-kalos-original.jpg",
+    "alt": "Πορτρέτο: Πλάτων Παπαδάτος Καλός",
+    "galleryScale": 1.3
+  },
+  "stefanos-nedeltsos": {
+    "src": "/images/team/stefanos-nedeltsos-original.png",
+    "alt": "Πορτρέτο: Στέφανος Νεδέλτσος",
+    "galleryScale": 1.3
+  },
+  "stelios-tzanakis": {
+    "src": "/images/team/stelios-tzanakis-original.jpg",
+    "alt": "Πορτρέτο: Στέλιος Τζανάκης",
+    "galleryScale": 1.1
   }
 }
