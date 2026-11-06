@@ -72,6 +72,7 @@ export type MediaSection = {
 
 export type TeamProfile = {
   title: string
+  role: string
   image: ContentImage
 }
 
@@ -507,9 +508,10 @@ export const pages = {
     eyebrow: "Ομάδα",
     title: "Η ομάδα μας",
     description: "Γνωρίστε τους ανθρώπους της εταιρείας μας.",
-    // Only the supplied name and photograph are published until a biography is provided.
+    // Publish the supplied identity and role; a full biography has not been provided.
     profile: {
       title: "Σουζάνα Ι. Κλημεντίδη",
+      role: "Συνιδρύτρια και Διευθύνουσα Εταίρος",
       image: {
         src: assetPath("/images/media/souzana-portrait.webp"),
         alt: "Πορτρέτο της Σουζάνας Ι. Κλημεντίδη",

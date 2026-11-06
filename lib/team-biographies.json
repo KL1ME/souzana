@@ -2,7 +2,7 @@
   {
     "id": "despoina-tsilivaraki-klimentidi",
     "name": "Δέσποινα Δ. Τσιλιβαράκη-Κλημεντίδη",
-    "role": "Συνιδρύτρια της Δικηγορικής Εταιρείας",
+    "role": "Συνιδρύτρια",
     "roleNeedsConfirmation": false,
     "category": "lawyers",
     "hasTwoVersions": true,
@@ -153,7 +153,7 @@
   },
   {
     "id": "ioanna-giannouli",
-    "name": "Γιαννούλη Ιωάννα",
+    "name": "Ιωάννα Γιαννούλη",
     "role": "Ασκούμενη Δικηγόρος",
     "roleNeedsConfirmation": false,
     "category": "trainees",
@@ -383,7 +383,7 @@
   {
     "id": "konstantina-krinidi",
     "name": "Κωνσταντίνα Κρηνίδη",
-    "role": "Δικηγόρος – Επικεφαλής Τμήματος δικογραφιών",
+    "role": "Δικηγόρος – Επικεφαλής Τμήματος Δικογραφιών",
     "roleNeedsConfirmation": false,
     "category": "lawyers",
     "hasTwoVersions": true,
@@ -704,7 +704,7 @@
   },
   {
     "id": "platon-papadatos-kalos",
-    "name": "Πλάτων Παπαδάτος Καλός",
+    "name": "Πλάτων Παπαδάτος - Καλός",
     "role": "Δικηγόρος",
     "roleNeedsConfirmation": false,
     "category": "lawyers",

@@ -17,12 +17,12 @@ export const directoryMembers: DirectoryMember[] = [
   {
     id: "souzana-klimentidi",
     name: profile.title,
-    role: "",
+    role: profile.role,
     category: null,
     image: profile.image,
     roleNeedsConfirmation: false,
     hasTwoVersions: false,
-    source: "Supplied name and photograph only; biography not provided",
+    source: "Supplied name, photograph and role; biography not provided",
     versions: { "1": [], "2": [] },
   },
   ...teamBiographies.map((member) => {

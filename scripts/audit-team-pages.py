@@ -113,7 +113,8 @@ def validate(documents, label):
     for base, version in (("/team/", "1"), ("/team/version-1/", "1"), ("/team/version-2/", "2")):
         souzana = documents[base + "souzana-klimentidi/"]
         assert "souzana-portrait.webp" in souzana
-        assert not ({"team-biography-copy", "team-profile-role", "team-biography-versions"} & parsed[base + "souzana-klimentidi/"].classes)
+        assert not ({"team-biography-copy", "team-biography-versions"} & parsed[base + "souzana-klimentidi/"].classes)
+        assert '<p class="team-profile-role">Συνιδρύτρια και Διευθύνουσα Εταίρος</p>' in souzana
         for marker in ("Managing Partner", "INSEAD", "Oxford", "Coral Shipping", "LinkedIn"):
             assert marker not in souzana, f"Withdrawn profile detail {marker!r} in {base}"
         for member in BIOGRAPHIES:
