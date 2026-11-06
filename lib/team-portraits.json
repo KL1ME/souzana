@@ -73,5 +73,10 @@
     "src": "/images/team/ioanna-giannouli-original.png",
     "alt": "Πορτρέτο: Ιωάννα Γιαννούλη",
     "galleryScale": 1.1
+  },
+  "angeliki-bastakou": {
+    "src": "/images/team/angeliki-bastakou-original.jpg",
+    "alt": "Πορτρέτο: Αγγελική Μπαστακού",
+    "galleryScale": 1.5
   }
 }
