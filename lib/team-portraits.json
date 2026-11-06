@@ -68,5 +68,10 @@
     "src": "/images/team/stelios-tzanakis-original.jpg",
     "alt": "Πορτρέτο: Στέλιος Τζανάκης",
     "galleryScale": 1.1
+  },
+  "ioanna-giannouli": {
+    "src": "/images/team/ioanna-giannouli-original.png",
+    "alt": "Πορτρέτο: Ιωάννα Γιαννούλη",
+    "galleryScale": 1.1
   }
 }
